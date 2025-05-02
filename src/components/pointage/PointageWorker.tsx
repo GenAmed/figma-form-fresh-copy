@@ -1,32 +1,152 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
-import { Header } from "@/components/navigation/Header";
 import { User } from "@/lib/auth";
-import { Clock, Play, Square } from "lucide-react";
+import { Clock, Play, Square, MapPin, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface PointageWorkerProps {
   user: User;
 }
 
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy: number;
+}
+
 export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [startTime, setStartTime] = useState<string>("");
+  const [selectedWorksite, setSelectedWorksite] = useState<string>("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [locationData, setLocationData] = useState<LocationData | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const currentDate = format(new Date(), "dd/MM/yyyy");
 
-  const handleStartTracking = () => {
-    const now = new Date();
-    setStartTime(format(now, "HH:mm"));
-    setIsTracking(true);
-    // Ici, on pourrait appeler une API pour enregistrer le début du pointage
+  // Fonction pour obtenir la géolocalisation
+  const getLocation = (): Promise<LocationData> => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error("La géolocalisation n'est pas supportée par votre navigateur"));
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const locationData = {
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+            accuracy: position.coords.accuracy
+          };
+          resolve(locationData);
+        },
+        (error) => {
+          let errorMessage = "Erreur de géolocalisation inconnue";
+          
+          switch (error.code) {
+            case 1:
+              errorMessage = "Permission de géolocalisation refusée";
+              break;
+            case 2:
+              errorMessage = "Position indisponible";
+              break;
+            case 3:
+              errorMessage = "Délai d'attente dépassé";
+              break;
+          }
+          
+          reject(new Error(errorMessage));
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
   };
 
-  const handleEndTracking = () => {
-    setIsTracking(false);
-    // Ici, on pourrait appeler une API pour enregistrer la fin du pointage
+  const handleStartTracking = async () => {
+    if (!selectedWorksite) {
+      toast.error("Veuillez sélectionner un chantier");
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Récupération de la position
+      const position = await getLocation();
+      
+      // Enregistrement de la position et début du pointage
+      setLocationData(position);
+      const now = new Date();
+      setStartTime(format(now, "HH:mm"));
+      setIsTracking(true);
+      
+      toast.success("Pointage démarré avec succès", {
+        description: `Position enregistrée: ${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`,
+      });
+      
+      // Ici, on pourrait appeler une API pour enregistrer le début du pointage avec les coordonnées
+      console.log("Début de pointage:", {
+        userId: user.id,
+        worksiteId: selectedWorksite,
+        startTime: format(now, "HH:mm:ss"),
+        location: position
+      });
+      
+    } catch (error) {
+      if (error instanceof Error) {
+        setLocationError(error.message);
+        toast.error("Erreur de géolocalisation", {
+          description: error.message,
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEndTracking = async () => {
+    setIsLoading(true);
+    
+    try {
+      // Récupération de la position de fin
+      const position = await getLocation();
+      
+      // Enregistrement de la position et fin du pointage
+      setLocationData(position);
+      setIsTracking(false);
+      
+      toast.success("Pointage terminé avec succès", {
+        description: `Position enregistrée: ${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`,
+      });
+      
+      // Ici, on pourrait appeler une API pour enregistrer la fin du pointage avec les coordonnées
+      console.log("Fin de pointage:", {
+        userId: user.id,
+        worksiteId: selectedWorksite,
+        endTime: format(new Date(), "HH:mm:ss"),
+        location: position
+      });
+      
+    } catch (error) {
+      if (error instanceof Error) {
+        setLocationError(error.message);
+        toast.error("Erreur de géolocalisation", {
+          description: error.message,
+        });
+      }
+      // Même en cas d'erreur, on termine le pointage
+      setIsTracking(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleWorksiteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedWorksite(e.target.value);
   };
 
   return (
@@ -47,7 +167,12 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
             Sélectionnez un chantier
           </label>
           <div className="relative">
-            <select className="w-full p-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-[#BD1E28]">
+            <select 
+              className="w-full p-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-1 focus:ring-[#BD1E28]"
+              value={selectedWorksite}
+              onChange={handleWorksiteChange}
+              disabled={isTracking}
+            >
               <option value="">Choisir un chantier</option>
               <option value="1">Chantier Paris-Nord</option>
               <option value="2">Chantier Marseille-Port</option>
@@ -56,6 +181,41 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
             <i className="fa-solid fa-chevron-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
           </div>
         </section>
+
+        {/* Location Status (new) */}
+        {locationData && (
+          <section className="mt-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <div className="flex items-start">
+                <MapPin className="h-5 w-5 text-blue-500 mt-0.5 mr-2" />
+                <div>
+                  <h4 className="text-sm font-medium text-blue-700">Position enregistrée</h4>
+                  <p className="text-xs text-blue-600">
+                    Lat: {locationData.latitude.toFixed(5)}, Long: {locationData.longitude.toFixed(5)}
+                  </p>
+                  <p className="text-xs text-blue-600">
+                    Précision: ~{Math.round(locationData.accuracy)}m
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* Location Error (new) */}
+        {locationError && (
+          <section className="mt-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-start">
+                <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2" />
+                <div>
+                  <h4 className="text-sm font-medium text-red-700">Problème de localisation</h4>
+                  <p className="text-xs text-red-600">{locationError}</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* Time Tracking Status */}
         <section className="mt-8">
@@ -67,9 +227,22 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
                 <Button 
                   onClick={handleStartTracking}
                   className="w-full bg-green-500 text-white py-3 rounded-md hover:bg-green-600 transition-colors duration-200 font-medium"
+                  disabled={isLoading || !selectedWorksite}
                 >
-                  <Play className="h-4 w-4 mr-2" />
-                  Commencer la journée
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Localisation...
+                    </span>
+                  ) : (
+                    <>
+                      <Play className="h-4 w-4 mr-2" />
+                      Commencer la journée
+                    </>
+                  )}
                 </Button>
               </div>
             ) : (
@@ -80,9 +253,22 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
                 <Button 
                   onClick={handleEndTracking}
                   className="w-full bg-[#BD1E28] text-white py-3 rounded-md hover:bg-[#a01820] transition-colors duration-200 font-medium"
+                  disabled={isLoading}
                 >
-                  <Square className="h-4 w-4 mr-2" />
-                  Terminer la journée
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Localisation...
+                    </span>
+                  ) : (
+                    <>
+                      <Square className="h-4 w-4 mr-2" />
+                      Terminer la journée
+                    </>
+                  )}
                 </Button>
               </div>
             )}
