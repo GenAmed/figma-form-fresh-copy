@@ -1,6 +1,6 @@
 
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle } from "lucide-react";
@@ -11,6 +11,8 @@ interface HomeAdminProps {
 }
 
 export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
+  const navigate = useNavigate();
+
   return (
     <div className="h-full text-base-content">
       {/* Header */}
@@ -33,11 +35,17 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
       <main className="flex-1 p-4 min-h-screen bg-[#F8F8F8] pt-0 pb-20">
         {/* Quick Stats */}
         <section id="quick-stats" className="grid grid-cols-2 gap-4 mb-6">
-          <Card className="bg-white rounded-lg shadow-sm p-4">
+          <Card 
+            className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => navigate("/gestion/users")}
+          >
             <p className="text-sm text-[#666666]">Employés Actifs</p>
             <p className="text-2xl font-bold text-[#333333]">24</p>
           </Card>
-          <Card className="bg-white rounded-lg shadow-sm p-4">
+          <Card 
+            className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => navigate("/gestion")}
+          >
             <p className="text-sm text-[#666666]">Chantiers Actifs</p>
             <p className="text-2xl font-bold text-[#333333]">8</p>
           </Card>
