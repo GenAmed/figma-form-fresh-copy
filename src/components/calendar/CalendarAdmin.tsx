@@ -19,6 +19,7 @@ import { checkUnassignedWorkers } from "@/services/assignment/assignmentCheckSer
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DayContentProps } from "react-day-picker";
 
 interface CalendarAdminProps {
   user: User;
@@ -217,7 +218,7 @@ export const CalendarAdmin: React.FC<CalendarAdminProps> = ({ user }) => {
               month={currentDate}
               showOutsideDays={true}
               components={{
-                DayContent: (props) => {
+                DayContent: (props: DayContentProps) => {
                   const date = props.date;
                   const dayAssignments = assignments.filter(assignment => 
                     isSameDay(assignment.date, date)
@@ -225,7 +226,7 @@ export const CalendarAdmin: React.FC<CalendarAdminProps> = ({ user }) => {
                   
                   return (
                     <div className="relative h-full w-full flex items-center justify-center">
-                      {props.day}
+                      {props.date.getDate()}
                       {dayAssignments.length > 0 && (
                         <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex space-x-0.5">
                           <div className="w-1 h-1 rounded-full bg-[#BD1E28]"></div>

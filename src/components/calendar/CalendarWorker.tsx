@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Clock, MapPin, CalendarClock } from "lucide-
 import { format, addMonths, subMonths, isSameDay, addDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { DayContentProps } from "react-day-picker";
 
 interface CalendarWorkerProps {
   user: User;
@@ -145,7 +146,7 @@ export const CalendarWorker: React.FC<CalendarWorkerProps> = ({ user }) => {
               }
             }}
             components={{
-              DayContent: (props) => {
+              DayContent: (props: DayContentProps) => {
                 const date = props.date;
                 const hasAssignment = assignments.some(assignment => 
                   isSameDay(assignment.date, date)
@@ -153,7 +154,7 @@ export const CalendarWorker: React.FC<CalendarWorkerProps> = ({ user }) => {
                 
                 return (
                   <div className="relative h-full w-full flex items-center justify-center">
-                    {props.day}
+                    {props.date.getDate()}
                     {hasAssignment && (
                       <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-[#BD1E28]"></div>
                     )}
