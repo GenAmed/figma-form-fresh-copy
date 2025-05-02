@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.create-worksite]
 verify_jwt = false
+
+[functions.get-worksites]
+verify_jwt = false

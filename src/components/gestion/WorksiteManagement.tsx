@@ -7,7 +7,6 @@ import { Card } from "@/components/ui/card";
 import { Building, Pencil, Plus, Trash2, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
 
 interface WorksiteManagementProps {
   user: User;
@@ -27,21 +26,25 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
   const [worksites, setWorksites] = useState<Worksite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Charger les chantiers depuis Supabase
+  // Charger les chantiers depuis notre Edge Function
   useEffect(() => {
     const fetchWorksites = async () => {
       try {
         setLoading(true);
-        const { data, error } = await supabase
-          .from("worksites")
-          .select("*");
-
+        
+        console.log("Tentative de récupération des chantiers via l'Edge Function");
+        
+        // Utiliser l'Edge Function pour récupérer les chantiers
+        const { data, error } = await supabase.functions.invoke("get-worksites");
+        
         if (error) {
           throw error;
         }
 
-        if (data) {
-          const formattedData: Worksite[] = data.map(worksite => ({
+        console.log("Réponse de l'Edge Function:", data);
+
+        if (data && data.data) {
+          const formattedData: Worksite[] = data.data.map(worksite => ({
             id: worksite.id,
             name: worksite.name,
             address: worksite.address,
@@ -89,6 +92,8 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
     
     if (confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) {
       try {
+        // Nous devrions également créer une Edge Function pour la suppression,
+        // mais pour l'instant, nous utilisons la méthode directe
         const { error } = await supabase
           .from("worksites")
           .delete()
