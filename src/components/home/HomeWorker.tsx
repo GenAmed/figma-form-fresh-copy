@@ -5,7 +5,7 @@ import { Header } from "@/components/navigation/Header";
 import { User } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AlertTriangle, CalendarDays } from "lucide-react";
+import { AlertTriangle, CalendarDays, Timer } from "lucide-react";
 
 interface HomeWorkerProps {
   user: User;
@@ -44,10 +44,10 @@ export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
           </div>
           <button 
             id="clock-button" 
-            className="w-full bg-[#BD1E28] text-white py-3 rounded-md hover:bg-[#a01820] transition-colors duration-200 font-medium"
+            className="w-full bg-[#BD1E28] text-white py-3 rounded-md hover:bg-[#a01820] transition-colors duration-200 font-medium flex items-center justify-center gap-2"
             onClick={handleClockButton}
           >
-            <i className="fa-regular fa-clock mr-2"></i>
+            <Timer className="h-5 w-5" />
             Pointer maintenant
           </button>
         </div>
