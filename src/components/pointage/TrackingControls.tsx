@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { showPointageFeedback } from "@/services/notifications/feedbackService";
-import { Clock, Loader, Play, Stop } from "lucide-react";
+import { Clock, Loader, Play, Square } from "lucide-react";
 import { hapticFeedback } from "@/services/hapticFeedback";
 
 interface TrackingControlsProps {
@@ -55,7 +55,7 @@ export const TrackingControls: React.FC<TrackingControlsProps> = ({
           {isLoading ? (
             <Loader className="h-5 w-5 animate-spin" />
           ) : (
-            <Stop className="h-5 w-5" />
+            <Square className="h-5 w-5" />
           )}
           Terminer le travail
         </Button>
