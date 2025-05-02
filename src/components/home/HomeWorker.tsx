@@ -1,19 +1,19 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { Header } from "@/components/navigation/Header";
 import { User } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
 
 interface HomeWorkerProps {
   user: User;
 }
 
 export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
-  const [isClockingIn, setIsClockingIn] = useState(false);
+  const navigate = useNavigate();
 
   const handleClockButton = () => {
-    setIsClockingIn(!isClockingIn);
-    // Ici, on pourrait appeler une API pour enregistrer le pointage
+    navigate("/pointage");
   };
 
   return (
@@ -27,15 +27,15 @@ export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
         <div id="status-card" className="mx-4 bg-white rounded-lg shadow-sm p-4 mb-4">
           <h2 className="text-[#333333] text-lg font-bold mb-2">Statut de pointage</h2>
           <div id="status-message" className="text-[#666666] mb-4">
-            {isClockingIn ? "Pointage en cours" : "Pas de pointage en cours"}
+            Accédez à la page de pointage pour commencer votre journée
           </div>
           <button 
             id="clock-button" 
-            className={`w-full ${isClockingIn ? "bg-gray-600" : "bg-[#BD1E28]"} text-white py-3 rounded-md hover:bg-[#a01820] transition-colors duration-200 font-medium`}
+            className="w-full bg-[#BD1E28] text-white py-3 rounded-md hover:bg-[#a01820] transition-colors duration-200 font-medium"
             onClick={handleClockButton}
           >
             <i className="fa-regular fa-clock mr-2"></i>
-            {isClockingIn ? "Terminer le pointage" : "Pointer maintenant"}
+            Pointer maintenant
           </button>
         </div>
 

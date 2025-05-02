@@ -16,6 +16,7 @@ interface LocationData {
   latitude: number;
   longitude: number;
   accuracy: number;
+  address?: string;
 }
 
 export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
@@ -25,6 +26,7 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [locationData, setLocationData] = useState<LocationData | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [isAddressLoading, setIsAddressLoading] = useState(false);
   const currentDate = format(new Date(), "dd/MM/yyyy");
 
   // Fonction pour obtenir la géolocalisation
@@ -66,6 +68,33 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
     });
   };
 
+  // Fonction pour convertir les coordonnées en adresse
+  const getAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
+      );
+      
+      if (!response.ok) {
+        throw new Error("Erreur lors de la récupération de l'adresse");
+      }
+      
+      const data = await response.json();
+      
+      // Formatage de l'adresse
+      if (data && data.display_name) {
+        // On peut aussi créer un format plus court avec des éléments spécifiques
+        // par exemple: route, house_number, village/town/city, postcode
+        return data.display_name;
+      } else {
+        return "Adresse non disponible";
+      }
+    } catch (error) {
+      console.error("Erreur de géocodage inverse:", error);
+      return "Erreur lors de la récupération de l'adresse";
+    }
+  };
+
   const handleStartTracking = async () => {
     if (!selectedWorksite) {
       toast.error("Veuillez sélectionner un chantier");
@@ -78,15 +107,27 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       // Récupération de la position
       const position = await getLocation();
       
-      // Enregistrement de la position et début du pointage
-      setLocationData(position);
+      // Démarrage du pointage avant de récupérer l'adresse
       const now = new Date();
       setStartTime(format(now, "HH:mm"));
       setIsTracking(true);
+      setLocationData(position);
       
       toast.success("Pointage démarré avec succès", {
         description: `Position enregistrée: ${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`,
       });
+      
+      // On récupère l'adresse en arrière-plan sans bloquer l'interface
+      setIsAddressLoading(true);
+      
+      try {
+        const address = await getAddressFromCoordinates(position.latitude, position.longitude);
+        setLocationData(prev => prev ? {...prev, address} : null);
+      } catch (addressError) {
+        console.error("Erreur lors de la récupération de l'adresse", addressError);
+      } finally {
+        setIsAddressLoading(false);
+      }
       
       // Ici, on pourrait appeler une API pour enregistrer le début du pointage avec les coordonnées
       console.log("Début de pointage:", {
@@ -122,6 +163,18 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       toast.success("Pointage terminé avec succès", {
         description: `Position enregistrée: ${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`,
       });
+      
+      // On récupère l'adresse en arrière-plan
+      setIsAddressLoading(true);
+      
+      try {
+        const address = await getAddressFromCoordinates(position.latitude, position.longitude);
+        setLocationData(prev => prev ? {...prev, address} : null);
+      } catch (addressError) {
+        console.error("Erreur lors de la récupération de l'adresse", addressError);
+      } finally {
+        setIsAddressLoading(false);
+      }
       
       // Ici, on pourrait appeler une API pour enregistrer la fin du pointage avec les coordonnées
       console.log("Fin de pointage:", {
@@ -182,7 +235,7 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
           </div>
         </section>
 
-        {/* Location Status (new) */}
+        {/* Location Status */}
         {locationData && (
           <section className="mt-4">
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -196,13 +249,20 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
                   <p className="text-xs text-blue-600">
                     Précision: ~{Math.round(locationData.accuracy)}m
                   </p>
+                  {isAddressLoading ? (
+                    <p className="text-xs text-blue-600 italic">Récupération de l'adresse en cours...</p>
+                  ) : locationData.address ? (
+                    <p className="text-xs text-blue-600">
+                      Adresse: {locationData.address}
+                    </p>
+                  ) : null}
                 </div>
               </div>
             </div>
           </section>
         )}
 
-        {/* Location Error (new) */}
+        {/* Location Error */}
         {locationError && (
           <section className="mt-4">
             <div className="bg-red-50 border border-red-200 rounded-lg p-3">
