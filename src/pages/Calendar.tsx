@@ -2,6 +2,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { CalendarWorker } from "@/components/calendar/CalendarWorker";
+import { CalendarAdmin } from "@/components/calendar/CalendarAdmin";
 import { getCurrentUser } from "@/lib/auth";
 
 const Calendar = () => {
@@ -12,7 +13,7 @@ const Calendar = () => {
     return <Navigate to="/" />;
   }
 
-  return <CalendarWorker user={user} />;
+  return user.role === "admin" ? <CalendarAdmin user={user} /> : <CalendarWorker user={user} />;
 };
 
 export default Calendar;
