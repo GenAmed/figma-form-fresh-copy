@@ -1,12 +1,14 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Calendar } from "@/components/ui/calendar";
 import { Card } from "@/components/ui/card";
-import { ChevronLeft, ChevronRight, Filter, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Filter, Plus, AlertTriangle } from "lucide-react";
 import { format, addMonths, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+import { checkUnassignedWorkers } from "@/services/assignment/assignmentCheckService";
+import { toast } from "sonner";
 
 interface CalendarAdminProps {
   user: User;
@@ -22,6 +24,7 @@ type Assignment = {
 export const CalendarAdmin: React.FC<CalendarAdminProps> = ({ user }) => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [unassignedCount, setUnassignedCount] = useState<number>(0);
   
   // Sample assignments data
   const assignments: Assignment[] = [
@@ -39,12 +42,35 @@ export const CalendarAdmin: React.FC<CalendarAdminProps> = ({ user }) => {
     }
   ];
 
+  // Check for unassigned workers when the component mounts
+  useEffect(() => {
+    const unassignedWorkers = checkUnassignedWorkers();
+    setUnassignedCount(unassignedWorkers.length);
+    
+    if (unassignedWorkers.length > 0) {
+      const workerNames = unassignedWorkers.map(w => w.name).join(", ");
+      toast.warning(`${unassignedWorkers.length} ouvrier(s) non assigné(s)`, {
+        description: `Ouvriers sans assignation: ${workerNames}`,
+        duration: 5000,
+      });
+    }
+  }, []);
+
   const handlePreviousMonth = () => {
     setCurrentDate(subMonths(currentDate, 1));
   };
 
   const handleNextMonth = () => {
     setCurrentDate(addMonths(currentDate, 1));
+  };
+
+  // Handle "Add Assignment" button click
+  const handleAddAssignment = () => {
+    // In a real app, this would open a modal or navigate to an assignment form
+    // For now, we'll just show a toast
+    toast.info("Ajouter une assignation", {
+      description: "Cette fonctionnalité sera bientôt disponible",
+    });
   };
 
   return (
@@ -61,6 +87,19 @@ export const CalendarAdmin: React.FC<CalendarAdminProps> = ({ user }) => {
 
       {/* Main Content */}
       <main className="flex-1 p-4 pb-20">
+        {/* Unassigned Workers Alert (if any) */}
+        {unassignedCount > 0 && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium">Attention</p>
+              <p className="text-xs text-amber-800">
+                {unassignedCount} ouvrier(s) n'ont pas d'assignation pour la semaine prochaine.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Calendar Widget */}
         <section className="bg-white rounded-lg shadow-sm mb-6">
           <div className="p-4 border-b">
@@ -120,7 +159,10 @@ export const CalendarAdmin: React.FC<CalendarAdminProps> = ({ user }) => {
         </section>
 
         {/* Floating Action Button */}
-        <button className="fixed right-4 bottom-20 w-14 h-14 bg-[#BD1E28] rounded-full shadow-lg flex items-center justify-center text-white">
+        <button 
+          className="fixed right-4 bottom-20 w-14 h-14 bg-[#BD1E28] rounded-full shadow-lg flex items-center justify-center text-white"
+          onClick={handleAddAssignment}
+        >
           <Plus size={24} />
         </button>
       </main>

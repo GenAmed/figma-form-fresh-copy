@@ -1,10 +1,10 @@
-
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { scheduleUnassignedWorkersCheck, checkAndNotifyUnassignedWorkers } from "@/services/assignment/assignmentCheckService";
 
 interface HomeAdminProps {
   user: User;
@@ -12,6 +12,16 @@ interface HomeAdminProps {
 
 export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
   const navigate = useNavigate();
+
+  // Set up the automatic check for unassigned workers
+  useEffect(() => {
+    // Schedule the regular checks
+    scheduleUnassignedWorkersCheck();
+    
+    // For testing, you can force a check immediately
+    // Uncomment the line below to test
+    // checkAndNotifyUnassignedWorkers(true);
+  }, []);
 
   return (
     <div className="h-full text-base-content">
@@ -76,6 +86,13 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
               </span>
               <ChevronRight className="w-5 h-5" />
             </Link>
+            <Link to="/calendrier" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+              <span className="flex items-center">
+                <Clock className="w-5 h-5 mr-3" />
+                Calendrier & Assignations
+              </span>
+              <ChevronRight className="w-5 h-5" />
+            </Link>
           </div>
         </section>
 
@@ -98,6 +115,13 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
               <div>
                 <p className="text-sm font-medium">Absence non justifiée</p>
                 <p className="text-xs text-[#666666]">Marie Martin - Chantier Bordeaux</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-3 bg-amber-50 rounded-md">
+              <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Ouvriers non assignés</p>
+                <p className="text-xs text-[#666666]">1 ouvrier sans assignation semaine prochaine</p>
               </div>
             </div>
           </div>
