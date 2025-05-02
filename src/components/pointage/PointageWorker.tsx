@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { Header } from "@/components/navigation/Header";
 import { User } from "@/lib/auth";
-import { Clock, Play, Stop } from "lucide-react";
+import { Clock, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -81,7 +81,7 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
                   onClick={handleEndTracking}
                   className="w-full bg-[#BD1E28] text-white py-3 rounded-md hover:bg-[#a01820] transition-colors duration-200 font-medium"
                 >
-                  <Stop className="h-4 w-4 mr-2" />
+                  <Square className="h-4 w-4 mr-2" />
                   Terminer la journée
                 </Button>
               </div>
