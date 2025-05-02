@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
-import { Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { Pencil, UserPlus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface UserManagementProps {
@@ -57,6 +58,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
     }
   };
 
+  const handleUserClick = (id: string) => {
+    navigate(`/gestion/users/details/${id}`);
+  };
+
   const handleEdit = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
     // Future implementation for editing a user
@@ -97,7 +102,8 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
           {users.map((userData) => (
             <Card 
               key={userData.id} 
-              className="bg-white rounded-lg shadow-sm p-4"
+              className="bg-white rounded-lg shadow-sm p-4 cursor-pointer"
+              onClick={() => handleUserClick(userData.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex space-x-3">
