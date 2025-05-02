@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { toast } from "sonner";
 import { subDays } from "date-fns";
-import { ExportFormat } from "@/services/export";
+import { ExportFormat } from "@/services/export/types";
 
 export const useReports = (mockChantiers: any[], mockEmployes: any[]) => {
   const [dateRange, setDateRange] = useState<{
@@ -87,7 +86,7 @@ export const useReports = (mockChantiers: any[], mockEmployes: any[]) => {
     return filteredData;
   };
 
-  const handleExport = async () => {
+  const handleExport = async (): Promise<void> => {
     try {
       setExportInProgress(true);
       toast.info(`Préparation de l'export en ${exportFormat.toUpperCase()}...`);
@@ -96,15 +95,19 @@ export const useReports = (mockChantiers: any[], mockEmployes: any[]) => {
       const dataToExport = generateExportData();
       
       // Simulate export success after delay
-      setTimeout(() => {
-        toast.success(`Exportation en ${exportFormat.toUpperCase()} réussie`);
-        setExportInProgress(false);
-      }, 1500);
+      return new Promise<void>((resolve) => {
+        setTimeout(() => {
+          toast.success(`Exportation en ${exportFormat.toUpperCase()} réussie`);
+          setExportInProgress(false);
+          resolve();
+        }, 1500);
+      });
       
     } catch (error) {
       console.error("Erreur d'export:", error);
       toast.error("Une erreur est survenue lors de l'export");
       setExportInProgress(false);
+      throw error; // Rethrow to ensure Promise rejection
     }
   };
 

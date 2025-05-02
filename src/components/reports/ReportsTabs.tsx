@@ -6,6 +6,7 @@ import { AlertsTab } from "./alerts/AlertsTab";
 import { DetailedTab } from "./detailed/DetailedTab";
 import { ExportTab } from "./export/ExportTab";
 import { CustomReportsTab } from "./custom/CustomReportsTab";
+import { ExportFormat } from "@/services/export/types";
 
 interface ReportsTabsProps {
   mockHeuresParChantier: any[];
@@ -15,10 +16,10 @@ interface ReportsTabsProps {
   setShowAllAlerts: (show: boolean) => void;
   alertStatuses: Record<number, string>;
   handleAlertStatusChange: (alertId: number, status: string) => void;
-  exportFormat: string;
-  setExportFormat: (format: any) => void;
+  exportFormat: ExportFormat;
+  setExportFormat: (format: ExportFormat) => void;
   exportInProgress: boolean;
-  handleExport: () => void;
+  handleExport: () => Promise<void>;
   handlePrintReport: () => void;
   customReportName: string;
   setCustomReportName: (name: string) => void;

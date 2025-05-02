@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { FileText, File, Download } from "lucide-react";
-import { ExportFormat } from "@/services/export";
+import { ExportFormat } from "@/services/export/types";
 
 interface ExportTabProps {
   exportFormat: ExportFormat;
