@@ -1,8 +1,7 @@
 
 import React from "react";
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
-
-export type NotificationType = "success" | "error" | "info" | "warning";
+import type { NotificationType } from "../../services/notifications/types";
 
 // Component to render notification icons
 export const NotificationIcon: React.FC<{ type: NotificationType }> = ({ type }) => {
