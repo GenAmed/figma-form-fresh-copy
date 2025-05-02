@@ -5,13 +5,15 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InputField } from "./InputField";
 import { useNavigate } from "react-router-dom";
+import { authenticateUser, setCurrentUser } from "@/lib/auth";
+import { toast } from "@/hooks/use-toast";
 
 const loginSchema = z.object({
   email: z
     .string()
-    .email("Please enter a valid email")
-    .min(1, "Email is required"),
-  password: z.string().min(1, "Password is required"),
+    .email("Veuillez entrer un email valide")
+    .min(1, "L'email est requis"),
+  password: z.string().min(1, "Le mot de passe est requis"),
   rememberMe: z.boolean().optional(),
 });
 
@@ -39,9 +41,22 @@ export const LoginForm: React.FC = () => {
   });
 
   const onSubmit = (data: LoginFormValues) => {
-    console.log("Form submitted:", data);
-    // Simulating a successful login, navigating to the home page
-    navigate("/home");
+    const user = authenticateUser(data.email, data.password);
+    
+    if (user) {
+      setCurrentUser(user);
+      navigate("/home");
+      toast({
+        title: "Connexion réussie",
+        description: `Bienvenue ${user.name}`,
+      });
+    } else {
+      toast({
+        title: "Erreur de connexion",
+        description: "Email ou mot de passe incorrect",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleInputChange =
@@ -114,6 +129,16 @@ export const LoginForm: React.FC = () => {
 
       <div className="text-center font-normal text-sm text-[#666] mt-4">
         Problème de connexion?
+      </div>
+
+      <div className="mt-6 border-t pt-4">
+        <div className="text-center mb-2 text-sm font-medium">Comptes de test:</div>
+        <div className="text-xs text-gray-700 mb-1">
+          <strong>Ouvrier:</strong> ouvrier@avem.fr (tout mot de passe)
+        </div>
+        <div className="text-xs text-gray-700">
+          <strong>Admin:</strong> admin@avem.fr (tout mot de passe)
+        </div>
       </div>
     </form>
   );

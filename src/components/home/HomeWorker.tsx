@@ -2,8 +2,13 @@
 import React, { useState } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { Header } from "@/components/navigation/Header";
+import { User } from "@/lib/auth";
 
-export const HomeWorker: React.FC = () => {
+interface HomeWorkerProps {
+  user: User;
+}
+
+export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
   const [isClockingIn, setIsClockingIn] = useState(false);
 
   const handleClockButton = () => {
@@ -14,7 +19,7 @@ export const HomeWorker: React.FC = () => {
   return (
     <div className="h-full text-base-content">
       {/* Header */}
-      <Header username="Thomas" role="Ouvrier" avatarUrl="https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg" />
+      <Header username={user.name} role={user.role} avatarUrl={user.avatarUrl} />
 
       {/* Main Content */}
       <div id="main-content" className="min-h-screen bg-[#F8F8F8] pt-20 pb-20">
