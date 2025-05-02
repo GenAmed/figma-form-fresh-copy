@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,59 +7,30 @@ import { UserHeader } from "./users/UserHeader";
 import { UserForm, UserFormValues } from "./users/UserForm";
 import { UserActions } from "./users/UserActions";
 import { FeedbackAlert } from "@/components/ui/feedback-alert";
+import { getCurrentUser } from "@/lib/auth";
 
 export const AddUser: React.FC = () => {
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  // Vérifier l'authentification au chargement du composant
-  useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        setIsAuthenticated(!!session);
-      } catch (error) {
-        console.error("Erreur lors de la vérification de l'authentification:", error);
-      } finally {
-        setAuthChecked(true);
-      }
-    };
-
-    checkAuth();
-  }, []);
-
-  // Configuration du listener d'authentification
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-    });
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
+  
+  // Vérifier l'authentification avec le système local actuel
+  const currentUser = getCurrentUser();
+  const isAuthenticated = !!currentUser && currentUser.role === "admin";
 
   const handleSubmit = async (values: UserFormValues) => {
     setIsSubmitting(true);
     setErrorDetails(null);
     
     try {
-      // Vérifier si l'utilisateur est authentifié
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Vous devez être connecté pour effectuer cette action");
+      // Vérifier si l'utilisateur est authentifié selon le système local
+      if (!isAuthenticated) {
+        throw new Error("Vous devez être connecté en tant qu'administrateur pour effectuer cette action");
       }
       
-      // Appeler la function Edge pour créer l'utilisateur
+      // Appeler la function Edge pour créer l'utilisateur sans passer de token
       const response = await supabase.functions.invoke("create-user", {
-        body: values,
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        body: values
       });
       
       // Vérifier s'il y a une erreur dans la réponse
@@ -81,7 +52,7 @@ export const AddUser: React.FC = () => {
       console.error("Erreur détaillée:", error);
       
       // Enregistrer les détails de l'erreur pour affichage
-      setErrorDetails(JSON.stringify(error, null, 2));
+      setErrorDetails(error instanceof Error ? error.message : JSON.stringify(error));
       
       // Gestion des erreurs spécifiques
       if (error.message && error.message.includes("User already registered")) {
@@ -100,20 +71,6 @@ export const AddUser: React.FC = () => {
     }
   };
 
-  const handleFormSubmit = (formData: UserFormValues) => {
-    return handleSubmit(formData);
-  };
-
-  // Afficher un message si l'authentification est en cours de vérification
-  if (!authChecked) {
-    return (
-      <div className="min-h-screen bg-[#F8F8F8] flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#BD1E28]"></div>
-        <p className="mt-4 text-gray-600">Vérification de l'authentification...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
       {/* Header */}
@@ -124,14 +81,14 @@ export const AddUser: React.FC = () => {
         {!isAuthenticated ? (
           <FeedbackAlert
             type="error"
-            title="Non authentifié"
-            description="Vous devez être connecté pour ajouter un utilisateur. Veuillez vous reconnecter."
+            title="Accès non autorisé"
+            description="Vous devez être connecté en tant qu'administrateur pour ajouter un utilisateur."
             className="mb-4"
             autoClose={false}
           />
         ) : (
           <>
-            <UserForm onSubmit={handleFormSubmit} isSubmitting={isSubmitting} />
+            <UserForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
             
             {/* Affichage des détails de l'erreur pour le débogage */}
             {errorDetails && (
