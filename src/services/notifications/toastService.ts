@@ -12,31 +12,37 @@ export const showToast = (
   duration = 5000,
   navigateTo?: string
 ): void => {
-  toast[type](title, {
+  const toastOptions: any = {
     description,
     duration,
-    icon: notificationIcons[type](),
-    action: navigateTo ? {
+    icon: notificationIcons[type]()
+  };
+
+  // If there's a navigation URL, make the toast clickable
+  if (navigateTo) {
+    // Add an action button for explicit navigation
+    toastOptions.action = {
       label: "Voir",
       onClick: () => {
-        // Use window.location or history.push depending on whether it's an absolute URL
         if (navigateTo.startsWith('http')) {
           window.location.href = navigateTo;
         } else {
           window.location.href = navigateTo; // Use React Router in a real app
         }
       }
-    } : undefined,
-    // We can't use onClick directly as it's not part of ExternalToast type
-    // Instead we can use onDismiss which is called when toast is dismissed
-    onDismiss: navigateTo ? () => {
+    };
+
+    // Make the entire toast clickable by using the onAutoClose callback
+    toastOptions.onDismiss = () => {
       if (navigateTo.startsWith('http')) {
         window.location.href = navigateTo;
       } else {
         window.location.href = navigateTo; // Use React Router in a real app
       }
-    } : undefined
-  });
+    };
+  }
+
+  toast[type](title, toastOptions);
 };
 
 // Display a toast notification with a link to navigate back
