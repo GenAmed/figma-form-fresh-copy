@@ -27,8 +27,8 @@ export const showToast = (
         }
       }
     } : undefined,
-    // Add an onClick handler to the toast itself
-    onClickToast: navigateTo ? () => {
+    // Make the entire toast clickable
+    onClick: navigateTo ? () => {
       if (navigateTo.startsWith('http')) {
         window.location.href = navigateTo;
       } else {
