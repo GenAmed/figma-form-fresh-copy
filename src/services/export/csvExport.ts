@@ -18,7 +18,7 @@ export const exportToCsv = (
   // Récupérer tous les en-têtes possibles (union de toutes les clés)
   const headers = Array.from(
     new Set(
-      data.reduce((acc, item) => [...acc, ...Object.keys(item)], [] as string[])
+      data.flatMap(item => Object.keys(item))
     )
   );
   

@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { FileText, Filter, AlertTriangle, Table as TableIcon, FileExcel, FileCsv, FilePdf, Download } from "lucide-react";
+import { FileText, Filter, AlertTriangle, Table as TableIcon, FileDown, File, Download } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChartContainer } from "@/components/ui/chart";
@@ -562,19 +562,19 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
                       <SelectContent>
                         <SelectItem value="excel">
                           <div className="flex items-center gap-2">
-                            <FileExcel className="h-4 w-4" />
+                            <FileDown className="h-4 w-4" />
                             <span>Excel (.xlsx)</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="csv">
                           <div className="flex items-center gap-2">
-                            <FileCsv className="h-4 w-4" />
+                            <File className="h-4 w-4" />
                             <span>CSV</span>
                           </div>
                         </SelectItem>
                         <SelectItem value="pdf">
                           <div className="flex items-center gap-2">
-                            <FilePdf className="h-4 w-4" />
+                            <FileText className="h-4 w-4" />
                             <span>PDF</span>
                           </div>
                         </SelectItem>

@@ -5,9 +5,16 @@ import "jspdf-autotable";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
-// Définir le type pour jsPDF avec autotable
-interface jsPDFWithAutoTable extends jsPDF {
-  autoTable: (options: any) => jsPDF;
+// Extend jsPDF with autotable
+declare module "jspdf" {
+  interface jsPDF {
+    autoTable: (options: any) => jsPDF;
+    internal: {
+      pageSize: { width: number; height: number };
+      pages: any[];
+      getNumberOfPages: () => number;
+    };
+  }
 }
 
 /**
@@ -18,7 +25,7 @@ export const exportToPdf = async (
   options: ExportOptions = {}
 ): Promise<Blob> => {
   // Créer un nouveau document PDF
-  const doc = new jsPDF() as jsPDFWithAutoTable;
+  const doc = new jsPDF();
   
   // Si pas de données, créer un PDF simple avec un message
   if (!data || data.length === 0) {
