@@ -12,14 +12,16 @@ export const showToast = (
   duration = 5000,
   navigateTo?: string
 ): void => {
+  // Define toast options
   const toastOptions: any = {
     description,
     duration,
     icon: notificationIcons[type]()
   };
 
-  // Always add a button for navigation if a URL is provided
+  // Only add action if a URL is provided
   if (navigateTo) {
+    // Add a visible button for navigation
     toastOptions.action = {
       label: "Voir détails",
       onClick: () => {
@@ -31,8 +33,8 @@ export const showToast = (
       }
     };
     
-    // Make the entire toast clickable
-    toastOptions.onClickActivity = () => {
+    // Also make the entire toast clickable (optional)
+    toastOptions.onClick = () => {
       if (navigateTo.startsWith('http')) {
         window.open(navigateTo, "_blank");
       } else {
@@ -41,6 +43,7 @@ export const showToast = (
     };
   }
 
+  // Display the toast with the configured options
   toast[type](title, toastOptions);
 };
 

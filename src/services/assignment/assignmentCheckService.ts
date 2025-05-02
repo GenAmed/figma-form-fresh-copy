@@ -1,8 +1,7 @@
 
 import { format, startOfWeek, endOfWeek, addWeeks } from "date-fns";
 import { fr } from "date-fns/locale";
-import { sendNotification } from "../notificationService";
-import { toast } from "sonner";
+import { showToast } from "../notifications/toastService";
 
 // Temporary mock data - to be replaced with actual API calls
 interface Employee {
@@ -107,23 +106,18 @@ export const checkAndNotifyUnassignedWorkers = (sendEmail: boolean = true): void
     const title = `${unassignedWorkers.length} ouvrier(s) non assigné(s)`;
     const message = `Les ouvriers suivants n'ont pas d'assignation pour la ${nextWeekFormatted} : ${workerNames}`;
     
-    // In-app notification
-    sendNotification(title, {
-      body: message,
-      requireInteraction: true,
-      tag: "unassigned-workers"
-    }, "warning");
-    
-    // Toast notification
-    toast.warning(title, {
-      description: message,
-      duration: 10000, // 10 seconds
-    });
+    // Toast notification with navigation to user management page
+    showToast(
+      title,
+      message,
+      "warning", 
+      10000, // 10 seconds
+      "/gestion/users"
+    );
     
     // Email notification (mock for now)
     if (sendEmail) {
       console.log(`[EMAIL] Subject: ${title} - Body: ${message}`);
-      // In a real implementation, this would call an email sending service
       sendEmailToAdmins(title, message);
     }
   }
@@ -135,7 +129,6 @@ export const checkAndNotifyUnassignedWorkers = (sendEmail: boolean = true): void
  */
 const sendEmailToAdmins = (subject: string, body: string): void => {
   // This would be replaced with actual email sending logic
-  // For example, using an API endpoint or a service like SendGrid
   console.log(`Email would be sent to admins with subject: "${subject}" and body: "${body}"`);
 };
 
@@ -145,7 +138,6 @@ export const scheduleUnassignedWorkersCheck = (): void => {
   checkAndNotifyUnassignedWorkers();
   
   // Schedule to run every day at 9:00 AM
-  // This is a simplified implementation - in production you might want a more robust solution
   const now = new Date();
   const nextCheck = new Date(
     now.getFullYear(),
