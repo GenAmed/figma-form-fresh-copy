@@ -15,19 +15,21 @@ export const AddUser: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Générer un UUID pour l'utilisateur
+      const userId = crypto.randomUUID();
+      
       // Créer le profil directement dans la table profiles
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .insert({
-          id: crypto.randomUUID(), // Générer un UUID pour l'utilisateur
+          id: userId,
           name: values.name,
           email: values.email,
           pin: values.pin,
           role: values.role,
           active: values.active,
           phone: values.phone || null,
-        })
-        .select();
+        });
       
       if (error) {
         console.error("Erreur lors de l'ajout de l'utilisateur:", error);
@@ -38,7 +40,7 @@ export const AddUser: React.FC = () => {
       navigate("/gestion/users");
     } catch (error: any) {
       console.error("Erreur détaillée:", error);
-      toast.error("Erreur lors de l'ajout de l'utilisateur");
+      toast.error(`Erreur lors de l'ajout de l'utilisateur: ${error.message || error}`);
     } finally {
       setIsSubmitting(false);
     }
