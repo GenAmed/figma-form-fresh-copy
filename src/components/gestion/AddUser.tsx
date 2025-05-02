@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AddUser: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export const AddUser: React.FC = () => {
     active: true,
     phone: ""
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -33,7 +35,7 @@ export const AddUser: React.FC = () => {
     setFormData({ ...formData, active: checked });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -48,10 +50,50 @@ export const AddUser: React.FC = () => {
       return;
     }
     
-    // Here we would typically send the data to an API
-    // For now, just show success message and navigate back
-    toast.success("Utilisateur ajouté avec succès");
-    navigate("/gestion/users");
+    setIsSubmitting(true);
+    
+    try {
+      // Créer un nouvel utilisateur dans Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.pin + formData.pin, // Utiliser le PIN comme mot de passe temporaire (doublé pour atteindre la longueur minimale)
+        options: {
+          data: {
+            name: formData.name,
+            pin: formData.pin,
+            role: formData.role
+          }
+        }
+      });
+      
+      if (authError) throw authError;
+      
+      // Si l'utilisateur est créé avec succès, mettre à jour son profil avec des informations supplémentaires
+      if (authData.user) {
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({
+            phone: formData.phone || null,
+            active: formData.active
+          })
+          .eq('id', authData.user.id);
+          
+        if (updateError) throw updateError;
+      }
+      
+      toast.success("Utilisateur ajouté avec succès");
+      navigate("/gestion/users");
+    } catch (error: any) {
+      console.error("Erreur lors de l'ajout de l'utilisateur:", error);
+      // Message d'erreur plus spécifique pour les adresses email déjà utilisées
+      if (error.message && error.message.includes("email already")) {
+        toast.error("Cette adresse email est déjà utilisée");
+      } else {
+        toast.error("Erreur lors de l'ajout de l'utilisateur");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -170,6 +212,7 @@ export const AddUser: React.FC = () => {
             variant="outline" 
             className="flex-1"
             onClick={() => navigate("/gestion/users")}
+            disabled={isSubmitting}
           >
             Annuler
           </Button>
@@ -177,8 +220,9 @@ export const AddUser: React.FC = () => {
             type="submit" 
             className="flex-1 bg-[#BD1E28] hover:bg-[#A01822] text-white"
             onClick={handleSubmit}
+            disabled={isSubmitting}
           >
-            Enregistrer
+            {isSubmitting ? 'Chargement...' : 'Enregistrer'}
           </Button>
         </div>
       </div>

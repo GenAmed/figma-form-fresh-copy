@@ -1,11 +1,12 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
-import { Pencil, UserPlus, Trash2 } from "lucide-react";
+import { Pencil, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserManagementProps {
   user: User;
@@ -17,35 +18,48 @@ type UserData = {
   email: string;
   role: "ouvrier" | "admin";
   avatarUrl: string;
+  phone?: string;
 };
 
 export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
   const navigate = useNavigate();
-  
-  // Sample user data
-  const [users, setUsers] = useState<UserData[]>([
-    {
-      id: "1",
-      name: "Thomas Bernard",
-      email: "thomas.bernard@avem.fr",
-      role: "admin",
-      avatarUrl: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
-    },
-    {
-      id: "2",
-      name: "Pierre Dubois",
-      email: "pierre.dubois@avem.fr",
-      role: "ouvrier",
-      avatarUrl: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-3.jpg"
-    },
-    {
-      id: "3",
-      name: "Marie Laurent",
-      email: "marie.laurent@avem.fr",
-      role: "admin",
-      avatarUrl: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-5.jpg"
-    }
-  ]);
+  const [users, setUsers] = useState<UserData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Charger les utilisateurs depuis Supabase
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*");
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          const formattedData: UserData[] = data.map(profile => ({
+            id: profile.id,
+            name: profile.name,
+            email: profile.email,
+            role: profile.role as "ouvrier" | "admin",
+            avatarUrl: profile.avatar_url || "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg", // Image par défaut si aucune n'est fournie
+            phone: profile.phone
+          }));
+          setUsers(formattedData);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des utilisateurs:", error);
+        toast.error("Erreur lors du chargement des utilisateurs");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsers();
+  }, []);
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -64,15 +78,30 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
 
   const handleEdit = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    // Future implementation for editing a user
-    toast.info("Fonction de modification à venir");
+    navigate(`/gestion/users/details/${id}`);
   };
 
-  const handleDelete = (id: string, event: React.MouseEvent) => {
+  const handleDelete = async (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    // Implementation for deleting a user
-    toast.success("Utilisateur supprimé avec succès");
-    setUsers(users.filter(user => user.id !== id));
+    
+    if (confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) {
+      try {
+        const { error } = await supabase
+          .from("profiles")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          throw error;
+        }
+
+        toast.success("Utilisateur supprimé avec succès");
+        setUsers(users.filter(user => user.id !== id));
+      } catch (error) {
+        console.error("Erreur lors de la suppression de l'utilisateur:", error);
+        toast.error("Erreur lors de la suppression de l'utilisateur");
+      }
+    }
   };
 
   const handleAddUser = () => {
@@ -97,41 +126,58 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
 
       {/* Main Content */}
       <main className="flex-1 p-4 space-y-4 pb-20">
-        {/* Users List */}
-        <div className="space-y-4">
-          {users.map((userData) => (
-            <Card 
-              key={userData.id} 
-              className="bg-white rounded-lg shadow-sm p-4 cursor-pointer"
-              onClick={() => handleUserClick(userData.id)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex space-x-3">
-                  <img src={userData.avatarUrl} alt="User" className="w-12 h-12 rounded-full" />
-                  <div>
-                    <h3 className="font-bold text-[#333333]">{userData.name}</h3>
-                    <p className="text-sm text-[#666666]">{userData.email}</p>
-                    {getRoleBadge(userData.role)}
+        {loading ? (
+          <div className="flex items-center justify-center h-40">
+            <Loader2 className="h-8 w-8 text-[#BD1E28] animate-spin" />
+          </div>
+        ) : users.length === 0 ? (
+          <Card className="p-6 text-center text-gray-500">
+            Aucun utilisateur trouvé. Ajoutez-en un nouveau avec le bouton ci-dessus.
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {users.map((userData) => (
+              <Card 
+                key={userData.id} 
+                className="bg-white rounded-lg shadow-sm p-4 cursor-pointer"
+                onClick={() => handleUserClick(userData.id)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex space-x-3">
+                    <img 
+                      src={userData.avatarUrl} 
+                      alt="User" 
+                      className="w-12 h-12 rounded-full"
+                      onError={(e) => {
+                        // Fallback en cas d'image non disponible
+                        (e.target as HTMLImageElement).src = "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg";
+                      }}
+                    />
+                    <div>
+                      <h3 className="font-bold text-[#333333]">{userData.name}</h3>
+                      <p className="text-sm text-[#666666]">{userData.email}</p>
+                      {getRoleBadge(userData.role)}
+                    </div>
+                  </div>
+                  <div className="flex space-x-2">
+                    <button 
+                      className="p-2 text-[#666666] hover:text-[#BD1E28]"
+                      onClick={(e) => handleEdit(userData.id, e)}
+                    >
+                      <Pencil className="w-5 h-5" />
+                    </button>
+                    <button 
+                      className="p-2 text-[#666666] hover:text-[#BD1E28]"
+                      onClick={(e) => handleDelete(userData.id, e)}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
                   </div>
                 </div>
-                <div className="flex space-x-2">
-                  <button 
-                    className="p-2 text-[#666666] hover:text-[#BD1E28]"
-                    onClick={(e) => handleEdit(userData.id, e)}
-                  >
-                    <Pencil className="w-5 h-5" />
-                  </button>
-                  <button 
-                    className="p-2 text-[#666666] hover:text-[#BD1E28]"
-                    onClick={(e) => handleDelete(userData.id, e)}
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+              </Card>
+            ))}
+          </div>
+        )}
       </main>
 
       {/* Bottom Navigation */}

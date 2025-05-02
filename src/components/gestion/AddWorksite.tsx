@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { ArrowLeft, Calendar } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 export const AddWorksite: React.FC = () => {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export const AddWorksite: React.FC = () => {
     endDate: "",
     status: "pending"
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
@@ -26,7 +28,7 @@ export const AddWorksite: React.FC = () => {
     setFormData({ ...formData, status: value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -35,10 +37,29 @@ export const AddWorksite: React.FC = () => {
       return;
     }
     
-    // Here we would typically send the data to an API
-    // For now, just show success message and navigate back
-    toast.success("Chantier ajouté avec succès");
-    navigate("/gestion");
+    setIsSubmitting(true);
+    
+    try {
+      const { error } = await supabase
+        .from("worksites")
+        .insert({
+          name: formData.name,
+          address: formData.address,
+          start_date: formData.startDate || null,
+          end_date: formData.endDate || null,
+          status: formData.status
+        });
+        
+      if (error) throw error;
+      
+      toast.success("Chantier ajouté avec succès");
+      navigate("/gestion");
+    } catch (error) {
+      console.error("Erreur lors de l'ajout du chantier:", error);
+      toast.error("Erreur lors de l'ajout du chantier");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -146,14 +167,16 @@ export const AddWorksite: React.FC = () => {
               variant="outline" 
               className="flex-1 px-6 py-3"
               onClick={() => navigate("/gestion")}
+              disabled={isSubmitting}
             >
               Annuler
             </Button>
             <Button 
               type="submit" 
               className="flex-1 px-6 py-3 bg-[#BD1E28] hover:bg-[#A01822] text-white"
+              disabled={isSubmitting}
             >
-              Enregistrer
+              {isSubmitting ? 'Chargement...' : 'Enregistrer'}
             </Button>
           </div>
         </form>

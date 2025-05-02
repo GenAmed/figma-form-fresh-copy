@@ -1,11 +1,13 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
-import { Building, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
+import { Building, Pencil, Plus, Trash2, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
 
 interface WorksiteManagementProps {
   user: User;
@@ -22,33 +24,43 @@ type Worksite = {
 
 export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) => {
   const navigate = useNavigate();
-  // Sample worksites data
-  const [worksites, setWorksites] = useState<Worksite[]>([
-    {
-      id: "1",
-      name: "Tour Eiffel Rénovation",
-      address: "7 Champ de Mars, 75007 Paris",
-      startDate: "01/04/2025",
-      endDate: "30/06/2025",
-      status: "active"
-    },
-    {
-      id: "2",
-      name: "Arc de Triomphe",
-      address: "Place Charles de Gaulle, 75008 Paris",
-      startDate: "15/05/2025",
-      endDate: "15/08/2025",
-      status: "pending"
-    },
-    {
-      id: "3",
-      name: "Notre-Dame",
-      address: "6 Parvis Notre-Dame, 75004 Paris",
-      startDate: "01/01/2025",
-      endDate: "31/03/2025",
-      status: "completed"
-    }
-  ]);
+  const [worksites, setWorksites] = useState<Worksite[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Charger les chantiers depuis Supabase
+  useEffect(() => {
+    const fetchWorksites = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("worksites")
+          .select("*");
+
+        if (error) {
+          throw error;
+        }
+
+        if (data) {
+          const formattedData: Worksite[] = data.map(worksite => ({
+            id: worksite.id,
+            name: worksite.name,
+            address: worksite.address,
+            startDate: worksite.start_date ? new Date(worksite.start_date).toLocaleDateString() : "",
+            endDate: worksite.end_date ? new Date(worksite.end_date).toLocaleDateString() : "",
+            status: worksite.status as "active" | "pending" | "completed"
+          }));
+          setWorksites(formattedData);
+        }
+      } catch (error) {
+        console.error("Erreur lors du chargement des chantiers:", error);
+        toast.error("Erreur lors du chargement des chantiers");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchWorksites();
+  }, []);
 
   const getStatusUI = (status: string) => {
     switch (status) {
@@ -69,15 +81,30 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
 
   const handleEdit = (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    // Future implementation for editing a worksite
-    console.log(`Editing worksite with id: ${id}`);
+    navigate(`/gestion/details/${id}`);
   };
 
-  const handleDelete = (id: string, event: React.MouseEvent) => {
+  const handleDelete = async (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    // Implementation for deleting a worksite
-    toast.success("Chantier supprimé avec succès");
-    setWorksites(worksites.filter(worksite => worksite.id !== id));
+    
+    if (confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) {
+      try {
+        const { error } = await supabase
+          .from("worksites")
+          .delete()
+          .eq("id", id);
+
+        if (error) {
+          throw error;
+        }
+
+        toast.success("Chantier supprimé avec succès");
+        setWorksites(worksites.filter(worksite => worksite.id !== id));
+      } catch (error) {
+        console.error("Erreur lors de la suppression du chantier:", error);
+        toast.error("Erreur lors de la suppression du chantier");
+      }
+    }
   };
 
   const handleAddWorksite = () => {
@@ -115,41 +142,54 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
 
       {/* Main Content */}
       <main className="flex-1 p-4 pb-20">
-        {/* Worksites List */}
-        <section className="space-y-4">
-          {worksites.map((worksite) => (
-            <Card 
-              key={worksite.id} 
-              className="bg-white rounded-lg shadow-sm p-4 cursor-pointer"
-              onClick={() => handleViewDetails(worksite.id)}
-            >
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h2 className="font-bold text-[#333333]">{worksite.name}</h2>
-                  <p className="text-sm text-[#666666]">{worksite.address}</p>
+        {loading ? (
+          <div className="flex items-center justify-center h-40">
+            <Loader2 className="h-8 w-8 text-[#BD1E28] animate-spin" />
+          </div>
+        ) : worksites.length === 0 ? (
+          <Card className="p-6 text-center text-gray-500">
+            Aucun chantier trouvé. Ajoutez-en un nouveau avec le bouton ci-dessus.
+          </Card>
+        ) : (
+          <section className="space-y-4">
+            {worksites.map((worksite) => (
+              <Card 
+                key={worksite.id} 
+                className="bg-white rounded-lg shadow-sm p-4 cursor-pointer"
+                onClick={() => handleViewDetails(worksite.id)}
+              >
+                <div className="flex justify-between items-start mb-3">
+                  <div>
+                    <h2 className="font-bold text-[#333333]">{worksite.name}</h2>
+                    <p className="text-sm text-[#666666]">{worksite.address}</p>
+                  </div>
+                  {getStatusUI(worksite.status)}
                 </div>
-                {getStatusUI(worksite.status)}
-              </div>
-              <div className="text-sm text-[#666666] mb-4">
-                <p>Du {worksite.startDate} au {worksite.endDate}</p>
-              </div>
-              <div className="flex justify-end space-x-3">
-                <button 
-                  className="p-2 text-[#666666] hover:text-[#BD1E28]"
-                  onClick={(e) => handleEdit(worksite.id, e)}
-                >
-                  <Pencil className="w-5 h-5" />
-                </button>
-                <button 
-                  className="p-2 text-[#666666] hover:text-[#BD1E28]"
-                  onClick={(e) => handleDelete(worksite.id, e)}
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            </Card>
-          ))}
-        </section>
+                <div className="text-sm text-[#666666] mb-4">
+                  {worksite.startDate && worksite.endDate ? (
+                    <p>Du {worksite.startDate} au {worksite.endDate}</p>
+                  ) : (
+                    <p>Dates non spécifiées</p>
+                  )}
+                </div>
+                <div className="flex justify-end space-x-3">
+                  <button 
+                    className="p-2 text-[#666666] hover:text-[#BD1E28]"
+                    onClick={(e) => handleEdit(worksite.id, e)}
+                  >
+                    <Pencil className="w-5 h-5" />
+                  </button>
+                  <button 
+                    className="p-2 text-[#666666] hover:text-[#BD1E28]"
+                    onClick={(e) => handleDelete(worksite.id, e)}
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                </div>
+              </Card>
+            ))}
+          </section>
+        )}
       </main>
 
       {/* Bottom Navigation */}
