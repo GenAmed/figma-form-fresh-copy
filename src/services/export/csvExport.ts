@@ -16,11 +16,17 @@ export const exportToCsv = (
   const includeHeaders = options.includeHeaders !== false;
   
   // Récupérer tous les en-têtes possibles (union de toutes les clés)
-  const headers = Array.from(
-    new Set(
-      data.flatMap(item => Object.keys(item))
-    )
-  );
+  // On utilise une approche qui fonctionne avec TypeScript en créant un nouveau Set à partir d'un array
+  const allKeys: string[] = [];
+  data.forEach(item => {
+    Object.keys(item).forEach(key => {
+      if (!allKeys.includes(key)) {
+        allKeys.push(key);
+      }
+    });
+  });
+  
+  const headers = allKeys;
   
   // Construire les lignes du CSV
   const csvRows = [];

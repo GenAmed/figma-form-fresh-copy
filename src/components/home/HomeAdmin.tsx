@@ -3,7 +3,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
-import { Building, ChevronRight, Clock, Users } from "lucide-react";
+import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 
 interface HomeAdminProps {
@@ -47,20 +47,51 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
         <section id="admin-actions" className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <h2 className="text-lg font-bold text-[#333333] mb-4">Administration</h2>
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+            <Link to="/gestion/users" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
               <span className="flex items-center">
                 <Users className="w-5 h-5 mr-3" />
                 Gérer les utilisateurs
               </span>
               <ChevronRight className="w-5 h-5" />
-            </button>
-            <button className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+            </Link>
+            <Link to="/gestion" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
               <span className="flex items-center">
                 <Building className="w-5 h-5 mr-3" />
                 Gérer les chantiers
               </span>
               <ChevronRight className="w-5 h-5" />
-            </button>
+            </Link>
+            <Link to="/rapports" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+              <span className="flex items-center">
+                <FileText className="w-5 h-5 mr-3" />
+                Rapports & Analyses
+              </span>
+              <ChevronRight className="w-5 h-5" />
+            </Link>
+          </div>
+        </section>
+
+        {/* Recent Alerts */}
+        <section id="recent-alerts" className="bg-white rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-lg font-bold text-[#333333]">Alertes Récentes</h2>
+            <Link to="/rapports?tab=alerts" className="text-xs text-[#BD1E28]">Voir tout</Link>
+          </div>
+          <div className="space-y-3">
+            <div className="flex items-start space-x-3 p-3 bg-red-50 rounded-md">
+              <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Heures supplémentaires excessives</p>
+                <p className="text-xs text-[#666666]">Jean Dupont - +4h au delà du seuil</p>
+              </div>
+            </div>
+            <div className="flex items-start space-x-3 p-3 bg-amber-50 rounded-md">
+              <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium">Absence non justifiée</p>
+                <p className="text-xs text-[#666666]">Marie Martin - Chantier Bordeaux</p>
+              </div>
+            </div>
           </div>
         </section>
 

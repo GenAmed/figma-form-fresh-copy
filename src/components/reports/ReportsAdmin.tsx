@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { User } from "@/lib/auth";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -5,7 +6,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { FileText, Filter, AlertTriangle, Table as TableIcon, FileDown, File, Download } from "lucide-react";
+import { FileText, Filter, AlertTriangle, Table as TableIcon, File, Download } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChartContainer } from "@/components/ui/chart";
@@ -26,6 +27,7 @@ import {
   TableCaption,
 } from "@/components/ui/table";
 import { exportData, ExportFormat } from "@/services/export";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 interface ReportsAdminProps {
   user: User;
@@ -69,9 +71,11 @@ const mockHeuresParJour = [
 
 // Mock alerts data
 const mockAlerts = [
-  { id: 1, type: "warning", message: "Jean Dupont a travaillé plus de 10h le 29/04", date: "2025-05-02" },
-  { id: 2, type: "danger", message: "Absence non justifiée de Pierre Durand", date: "2025-05-01" },
-  { id: 3, type: "info", message: "Nouveau chantier assigné: Lyon", date: "2025-04-30" },
+  { id: 1, type: "warning", message: "Jean Dupont a travaillé plus de 10h le 29/04", date: "2025-05-02", status: "open" },
+  { id: 2, type: "danger", message: "Absence non justifiée de Pierre Durand", date: "2025-05-01", status: "open" },
+  { id: 3, type: "info", message: "Nouveau chantier assigné: Lyon", date: "2025-04-30", status: "resolved" },
+  { id: 4, type: "warning", message: "Marie Martin a dépassé 42h cette semaine", date: "2025-04-30", status: "pending" },
+  { id: 5, type: "danger", message: "Pointage manquant pour Lucas Bernard", date: "2025-04-29", status: "resolved" },
 ];
 
 export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
@@ -88,6 +92,14 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
   const [exportFormat, setExportFormat] = useState<ExportFormat>("excel");
   const [showFilters, setShowFilters] = useState<boolean>(false);
   const [exportInProgress, setExportInProgress] = useState<boolean>(false);
+  const [alertStatuses, setAlertStatuses] = useState<Record<number, string>>({});
+  const [chartType, setChartType] = useState<"bar" | "line">("bar");
+  const [showAllAlerts, setShowAllAlerts] = useState<boolean>(false);
+  const [customReportName, setCustomReportName] = useState<string>("");
+  const [savedReports, setSavedReports] = useState<{id: string, name: string, filters: any}[]>([
+    {id: "1", name: "Rapport mensuel standard", filters: {period: "month"}},
+    {id: "2", name: "Heures par chantier", filters: {groupBy: "chantier"}}
+  ]);
 
   const toggleChantierSelection = (chantierId: string) => {
     if (selectedChantiers.includes(chantierId)) {
@@ -179,6 +191,45 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
       window.print();
     }, 1500);
   };
+
+  const handleAlertStatusChange = (alertId: number, status: string) => {
+    setAlertStatuses(prev => ({
+      ...prev,
+      [alertId]: status
+    }));
+    
+    toast.success(`Statut de l'alerte mis à jour : ${status}`);
+  };
+
+  const handleSaveReport = () => {
+    if (!customReportName) {
+      toast.error("Veuillez donner un nom à votre rapport");
+      return;
+    }
+
+    const newReport = {
+      id: Date.now().toString(),
+      name: customReportName,
+      filters: {
+        dateRange,
+        selectedChantiers,
+        selectedEmployes,
+        chartType
+      }
+    };
+
+    setSavedReports([...savedReports, newReport]);
+    setCustomReportName("");
+    toast.success("Rapport personnalisé enregistré avec succès");
+  };
+
+  const handleDeleteReport = (reportId: string) => {
+    setSavedReports(savedReports.filter(report => report.id !== reportId));
+    toast.info("Rapport supprimé");
+  };
+
+  // Filter alerts based on tab selection
+  const filteredAlerts = showAllAlerts ? mockAlerts : mockAlerts.filter(alert => alert.status !== "resolved");
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] pb-16">
@@ -338,18 +389,28 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
 
         {/* Dashboard Tabs */}
         <Tabs defaultValue="dashboard">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-full grid-cols-5 mb-4">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="alerts">Alertes</TabsTrigger>
             <TabsTrigger value="detailed">Détaillé</TabsTrigger>
             <TabsTrigger value="export">Export</TabsTrigger>
+            <TabsTrigger value="custom">Personnalisé</TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-4">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle>Heures par chantier</CardTitle>
+                <Select defaultValue="bar" onValueChange={(value) => setChartType(value as "bar" | "line")}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Type de graphique" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="bar">Barres</SelectItem>
+                    <SelectItem value="line">Lignes</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 <ChartContainer config={{ chantiers: {} }} className="w-full h-[300px]">
@@ -413,25 +474,77 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
           {/* Alerts Tab */}
           <TabsContent value="alerts" className="space-y-4">
             <Card>
-              <CardHeader>
-                <CardTitle>Alertes récentes</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle>Gestion des alertes</CardTitle>
+                <div className="flex items-center gap-2">
+                  <label className="text-sm" htmlFor="showAllAlerts">Afficher résolues</label>
+                  <input 
+                    type="checkbox" 
+                    id="showAllAlerts" 
+                    className="h-4 w-4"
+                    checked={showAllAlerts}
+                    onChange={() => setShowAllAlerts(!showAllAlerts)}
+                  />
+                </div>
               </CardHeader>
               <CardContent>
-                {mockAlerts.map(alert => (
-                  <div key={alert.id} className="mb-4 p-4 border-l-4 bg-white rounded shadow-sm flex items-start gap-3" style={{
-                    borderLeftColor: alert.type === 'warning' ? '#f59e0b' : alert.type === 'danger' ? '#ef4444' : '#3b82f6'
-                  }}>
-                    <AlertTriangle className={`h-5 w-5 ${
-                      alert.type === 'warning' ? 'text-amber-500' : 
-                      alert.type === 'danger' ? 'text-red-500' : 
-                      'text-blue-500'
-                    }`} />
-                    <div>
-                      <div className="font-medium">{alert.message}</div>
-                      <div className="text-sm text-gray-500">{format(new Date(alert.date), "dd/MM/yyyy")}</div>
+                {filteredAlerts.map(alert => {
+                  const currentStatus = alertStatuses[alert.id] || alert.status;
+                  return (
+                    <div key={alert.id} className="mb-4 p-4 border-l-4 bg-white rounded shadow-sm" style={{
+                      borderLeftColor: alert.type === 'warning' ? '#f59e0b' : 
+                                       alert.type === 'danger' ? '#ef4444' : 
+                                       '#3b82f6'
+                    }}>
+                      <div className="flex justify-between items-start">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className={`h-5 w-5 mt-0.5 ${
+                            alert.type === 'warning' ? 'text-amber-500' : 
+                            alert.type === 'danger' ? 'text-red-500' : 
+                            'text-blue-500'
+                          }`} />
+                          <div>
+                            <div className="font-medium">{alert.message}</div>
+                            <div className="text-sm text-gray-500">{format(new Date(alert.date), "dd/MM/yyyy")}</div>
+                            <div className="mt-1">
+                              <Badge variant={
+                                currentStatus === 'open' ? 'default' :
+                                currentStatus === 'pending' ? 'outline' : 
+                                'secondary'
+                              }>
+                                {currentStatus === 'open' ? 'À traiter' : 
+                                 currentStatus === 'pending' ? 'En cours' : 
+                                 'Résolu'}
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <Select 
+                          value={currentStatus} 
+                          onValueChange={(value) => handleAlertStatusChange(alert.id, value)}
+                        >
+                          <SelectTrigger className="w-24 h-8 text-xs">
+                            <SelectValue placeholder="Statut" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="open">À traiter</SelectItem>
+                            <SelectItem value="pending">En cours</SelectItem>
+                            <SelectItem value="resolved">Résolu</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+                {filteredAlerts.length === 0 && (
+                  <Alert>
+                    <AlertTriangle className="h-4 w-4" />
+                    <AlertTitle>Aucune alerte</AlertTitle>
+                    <AlertDescription>
+                      Il n'y a actuellement aucune alerte à afficher.
+                    </AlertDescription>
+                  </Alert>
+                )}
               </CardContent>
             </Card>
             <Card>
@@ -562,7 +675,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
                       <SelectContent>
                         <SelectItem value="excel">
                           <div className="flex items-center gap-2">
-                            <FileDown className="h-4 w-4" />
+                            <File className="h-4 w-4" />
                             <span>Excel (.xlsx)</span>
                           </div>
                         </SelectItem>
@@ -672,6 +785,128 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
                   }}>
                     + Ajouter un rapport automatique
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Custom Reports Tab */}
+          <TabsContent value="custom" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rapports personnalisés</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  <div>
+                    <Label>Créer un nouveau rapport personnalisé</Label>
+                    <div className="flex gap-2 mt-2">
+                      <Input 
+                        placeholder="Nom du rapport" 
+                        value={customReportName}
+                        onChange={(e) => setCustomReportName(e.target.value)}
+                        className="flex-1" 
+                      />
+                      <Button onClick={handleSaveReport}>
+                        Sauvegarder
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Le rapport sera créé avec les filtres actuellement appliqués.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <Label>Rapports sauvegardés</Label>
+                    <div className="space-y-2 mt-2">
+                      {savedReports.map(report => (
+                        <div key={report.id} className="flex items-center justify-between p-3 bg-white border rounded-md">
+                          <span className="font-medium">{report.name}</span>
+                          <div className="flex gap-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                toast.success(`Rapport "${report.name}" chargé`);
+                              }}
+                            >
+                              Charger
+                            </Button>
+                            <Button 
+                              variant="destructive" 
+                              size="sm"
+                              onClick={() => handleDeleteReport(report.id)}
+                            >
+                              Supprimer
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {savedReports.length === 0 && (
+                        <div className="text-center py-6 text-gray-500">
+                          <p>Aucun rapport personnalisé sauvegardé</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader>
+                <CardTitle>Modèles de rapports prédéfinis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="font-medium">Rapport hebdomadaire</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Résumé des heures par employé sur 7 jours
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => {
+                      toast.success("Modèle de rapport hebdomadaire appliqué");
+                    }}>
+                      Appliquer
+                    </Button>
+                  </div>
+                  
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="font-medium">Rapport mensuel</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Résumé des heures par chantier sur 30 jours
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => {
+                      toast.success("Modèle de rapport mensuel appliqué");
+                    }}>
+                      Appliquer
+                    </Button>
+                  </div>
+                  
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="font-medium">Synthèse par chantier</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Détail des heures par employé, groupées par chantier
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => {
+                      toast.success("Modèle de synthèse par chantier appliqué");
+                    }}>
+                      Appliquer
+                    </Button>
+                  </div>
+                  
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="font-medium">Suivi des anomalies</h3>
+                    <p className="text-sm text-gray-500 mt-1">
+                      Liste des alertes et anomalies de pointage
+                    </p>
+                    <Button variant="outline" size="sm" className="mt-4" onClick={() => {
+                      toast.success("Modèle de suivi des anomalies appliqué");
+                    }}>
+                      Appliquer
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
