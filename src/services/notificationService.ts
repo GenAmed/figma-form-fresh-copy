@@ -1,19 +1,10 @@
 
 // Service pour gérer les notifications et rappels
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
-import React from "react";
-
-// Types de notifications
-export type NotificationType = "success" | "error" | "info" | "warning";
-
-// Configuration des icônes par type
-const notificationIcons = {
-  success: () => <CheckCircle className="h-4 w-4" />,
-  error: () => <XCircle className="h-4 w-4" />,
-  info: () => <Info className="h-4 w-4" />,
-  warning: () => <AlertCircle className="h-4 w-4" />
-};
+import { 
+  notificationIcons, 
+  NotificationType 
+} from "@/components/notifications/NotificationIcons";
 
 // Permissions de notification
 export const requestNotificationPermission = async (): Promise<boolean> => {
@@ -250,3 +241,6 @@ export const showWorksiteFeedback = (
     }
   }
 };
+
+// Exporter le type pour être utilisé ailleurs
+export { NotificationType };
