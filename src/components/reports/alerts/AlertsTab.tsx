@@ -9,6 +9,7 @@ import { AlertTriangle } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface Alert {
   id: number;
@@ -16,6 +17,7 @@ interface Alert {
   message: string;
   date: string;
   status: string;
+  linkedRoute?: string; // Add optional route property
 }
 
 interface AlertsTabProps {
@@ -33,8 +35,17 @@ export const AlertsTab = ({
   alertStatuses,
   handleAlertStatusChange
 }: AlertsTabProps) => {
+  const navigate = useNavigate();
+  
   // Filter alerts based on tab selection
   const filteredAlerts = showAllAlerts ? alerts : alerts.filter(alert => alert.status !== "resolved");
+
+  // Handle alert click to navigate
+  const handleAlertClick = (alert: Alert) => {
+    if (alert.linkedRoute) {
+      navigate(alert.linkedRoute);
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -56,11 +67,15 @@ export const AlertsTab = ({
           {filteredAlerts.map(alert => {
             const currentStatus = alertStatuses[alert.id] || alert.status;
             return (
-              <div key={alert.id} className="mb-4 p-4 border-l-4 bg-white rounded shadow-sm" style={{
-                borderLeftColor: alert.type === 'warning' ? '#f59e0b' : 
-                                alert.type === 'danger' ? '#ef4444' : 
-                                '#3b82f6'
-              }}>
+              <div key={alert.id} 
+                className={`mb-4 p-4 border-l-4 bg-white rounded shadow-sm ${alert.linkedRoute ? 'cursor-pointer hover:bg-gray-50' : ''}`} 
+                style={{
+                  borderLeftColor: alert.type === 'warning' ? '#f59e0b' : 
+                                  alert.type === 'danger' ? '#ef4444' : 
+                                  '#3b82f6'
+                }}
+                onClick={() => alert.linkedRoute && handleAlertClick(alert)}
+              >
                 <div className="flex justify-between items-start">
                   <div className="flex items-start gap-3">
                     <AlertTriangle className={`h-5 w-5 mt-0.5 ${
@@ -87,8 +102,14 @@ export const AlertsTab = ({
                   <Select 
                     value={currentStatus} 
                     onValueChange={(value) => handleAlertStatusChange(alert.id, value)}
+                    // Stop propagation to prevent triggering parent click event
+                    onOpenChange={(open) => {
+                      if (open) {
+                        event?.stopPropagation();
+                      }
+                    }}
                   >
-                    <SelectTrigger className="w-24 h-8 text-xs">
+                    <SelectTrigger className="w-24 h-8 text-xs" onClick={(e) => e.stopPropagation()}>
                       <SelectValue placeholder="Statut" />
                     </SelectTrigger>
                     <SelectContent>

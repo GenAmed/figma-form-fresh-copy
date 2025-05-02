@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { addMonths, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay } from "date-fns";
-import { toast } from "sonner";
+import { showToast } from "@/services/notificationService";
 import { Assignment, Worker } from "../types";
 import { checkUnassignedWorkers } from "@/services/assignment/assignmentCheckService";
 
@@ -85,10 +84,13 @@ export const useAdminCalendar = () => {
     
     if (unassignedList.length > 0) {
       const workerNames = unassignedList.map(w => w.name).join(", ");
-      toast.warning(`${unassignedList.length} ouvrier(s) non assigné(s)`, {
-        description: `Ouvriers sans assignation: ${workerNames}`,
-        duration: 5000,
-      });
+      showToast(
+        `${unassignedList.length} ouvrier(s) non assigné(s)`, 
+        `Ouvriers sans assignation: ${workerNames}`,
+        "warning",
+        5000,
+        "/gestion/users"
+      );
     }
   }, []);
 
@@ -103,9 +105,13 @@ export const useAdminCalendar = () => {
   // Handle "Add Assignment" button click
   const handleAddAssignment = () => {
     // In a real app, this would open a modal or navigate to an assignment form
-    toast.info("Ajouter une assignation", {
-      description: "Cette fonctionnalité sera bientôt disponible",
-    });
+    showToast(
+      "Ajouter une assignation", 
+      "Cette fonctionnalité sera bientôt disponible",
+      "info",
+      5000,
+      "/gestion"
+    );
   };
 
   // Filter assignments for the selected date

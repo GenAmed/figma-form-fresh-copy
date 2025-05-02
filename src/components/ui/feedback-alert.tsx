@@ -3,6 +3,7 @@ import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 type FeedbackType = "success" | "error" | "warning" | "info";
 
@@ -14,6 +15,7 @@ interface FeedbackAlertProps {
   onDismiss?: () => void;
   autoClose?: boolean;
   duration?: number;
+  navigateTo?: string;
 }
 
 export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
@@ -24,8 +26,10 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
   onDismiss,
   autoClose = true,
   duration = 5000,
+  navigateTo,
 }) => {
   const [isVisible, setIsVisible] = React.useState(true);
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -41,6 +45,12 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
   }, [autoClose, duration, onDismiss]);
 
   if (!isVisible) return null;
+
+  const handleClick = () => {
+    if (navigateTo) {
+      navigate(navigateTo);
+    }
+  };
 
   // Déterminer l'icône et les couleurs en fonction du type
   const getIconAndClass = () => {
@@ -80,7 +90,10 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
   const { icon, alertClass, titleClass, descriptionClass } = getIconAndClass();
 
   return (
-    <Alert className={cn("relative", alertClass, className)}>
+    <Alert 
+      className={cn("relative", alertClass, navigateTo ? "cursor-pointer hover:bg-opacity-80" : "", className)}
+      onClick={navigateTo ? handleClick : undefined}
+    >
       {icon}
       <AlertTitle className={cn("ml-2", titleClass)}>{title}</AlertTitle>
       {description && (
@@ -90,7 +103,8 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
       )}
       {onDismiss && (
         <button
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation(); // Prevent triggering parent click
             setIsVisible(false);
             onDismiss();
           }}
