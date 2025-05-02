@@ -86,6 +86,7 @@ export const LoginForm: React.FC = () => {
         icon={emailIcon}
         onChange={handleInputChange("email")}
         value={formValues.email}
+        {...register("email")}
       />
       {errors.email && (
         <p className="text-red-500 text-xs mt-1 mb-2">{errors.email.message}</p>
@@ -99,6 +100,7 @@ export const LoginForm: React.FC = () => {
         showPasswordToggle={true}
         onChange={handleInputChange("password")}
         value={formValues.password}
+        {...register("password")}
       />
       {errors.password && (
         <p className="text-red-500 text-xs mt-1 mb-2">

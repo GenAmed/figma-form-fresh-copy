@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 
-interface InputFieldProps {
+interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   type: string;
   placeholder: string;
@@ -18,6 +19,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   showPasswordToggle = false,
   onChange,
   value,
+  ...rest
 }) => {
   const [showPassword, setShowPassword] = useState(false);
 
@@ -44,6 +46,7 @@ export const InputField: React.FC<InputFieldProps> = ({
           className="w-full border border-gray-300 text-base text-[#ADAEBC] px-10 py-2.5 rounded-md border-solid"
           onChange={onChange}
           value={value}
+          {...rest}
         />
         {showPasswordToggle && (
           <div onClick={togglePasswordVisibility} className="cursor-pointer">
