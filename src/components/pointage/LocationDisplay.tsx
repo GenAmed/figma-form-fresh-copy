@@ -42,7 +42,7 @@ export const LocationDisplay: React.FC<LocationDisplayProps> = ({
         </h2>
 
         {isOffline && !locationError && (
-          <Alert variant="warning" className="mb-3 bg-amber-50 text-amber-800 border-amber-200">
+          <Alert className="mb-3 bg-amber-50 text-amber-800 border-amber-200">
             <WifiOff className="h-4 w-4 mr-2" />
             <AlertTitle className="text-sm font-medium">Mode hors-ligne</AlertTitle>
             <AlertDescription className="text-xs">

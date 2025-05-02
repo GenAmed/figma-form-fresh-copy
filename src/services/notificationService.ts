@@ -1,9 +1,8 @@
-
 // Service pour gérer les notifications et rappels
 import { toast } from "sonner";
 import { 
   notificationIcons, 
-  NotificationType 
+  type NotificationType 
 } from "@/components/notifications/NotificationIcons";
 
 // Permissions de notification
@@ -56,21 +55,21 @@ export const showToast = (
     case "success":
       toast.success(title, {
         description,
-        icon: notificationIcons.success,
+        icon: notificationIcons.success(),
         duration: 4000,
       });
       break;
     case "error":
       toast.error(title, {
         description,
-        icon: notificationIcons.error,
+        icon: notificationIcons.error(),
         duration: 6000,
       });
       break;
     case "warning":
       toast.warning(title, {
         description,
-        icon: notificationIcons.warning,
+        icon: notificationIcons.warning(),
         duration: 5000,
       });
       break;
@@ -78,7 +77,7 @@ export const showToast = (
     default:
       toast.info(title, {
         description,
-        icon: notificationIcons.info,
+        icon: notificationIcons.info(),
         duration: 4000,
       });
       break;
@@ -242,5 +241,5 @@ export const showWorksiteFeedback = (
   }
 };
 
-// Exporter le type pour être utilisé ailleurs
-export { NotificationType };
+// Re-export the type using the correct syntax
+export type { NotificationType };
