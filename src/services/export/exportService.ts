@@ -14,6 +14,11 @@ export const exportData = async (
   options: ExportOptions = {}
 ): Promise<boolean> => {
   try {
+    if (!data || data.length === 0) {
+      console.warn("Aucune donnée à exporter");
+      return false;
+    }
+
     const defaultFileName = `export-${new Date().toISOString().split("T")[0]}`;
     const fileName = options.fileName || defaultFileName;
     

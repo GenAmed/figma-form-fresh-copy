@@ -1,10 +1,10 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
-import { FileText, File, Download } from "lucide-react";
+import { FileText, File, Download, Printer } from "lucide-react";
 import { ExportFormat } from "@/services/export/types";
 
 interface ExportTabProps {
@@ -22,6 +22,22 @@ export const ExportTab = ({
   handleExport,
   handlePrintReport
 }: ExportTabProps) => {
+  const [exportOptions, setExportOptions] = useState({
+    pointages: true,
+    resumeChantiers: true,
+    resumeEmployes: true,
+    alertes: false,
+    geoloc: false,
+    grouperSemaine: true
+  });
+  
+  const handleOptionChange = (option: string) => {
+    setExportOptions({
+      ...exportOptions,
+      [option]: !exportOptions[option as keyof typeof exportOptions]
+    });
+  };
+  
   return (
     <div className="space-y-4">
       <Card>
@@ -66,19 +82,43 @@ export const ExportTab = ({
               <label className="block text-sm font-medium mb-1">Contenu à exporter</label>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" id="pointages" className="h-4 w-4" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    id="pointages" 
+                    className="h-4 w-4" 
+                    checked={exportOptions.pointages}
+                    onChange={() => handleOptionChange('pointages')}
+                  />
                   <label htmlFor="pointages">Pointages détaillés</label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" id="resume-chantiers" className="h-4 w-4" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    id="resume-chantiers" 
+                    className="h-4 w-4" 
+                    checked={exportOptions.resumeChantiers}
+                    onChange={() => handleOptionChange('resumeChantiers')}
+                  />
                   <label htmlFor="resume-chantiers">Résumé par chantier</label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" id="resume-employes" className="h-4 w-4" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    id="resume-employes" 
+                    className="h-4 w-4" 
+                    checked={exportOptions.resumeEmployes}
+                    onChange={() => handleOptionChange('resumeEmployes')}
+                  />
                   <label htmlFor="resume-employes">Résumé par employé</label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" id="alertes" className="h-4 w-4" />
+                  <input 
+                    type="checkbox" 
+                    id="alertes" 
+                    className="h-4 w-4"
+                    checked={exportOptions.alertes}
+                    onChange={() => handleOptionChange('alertes')}
+                  />
                   <label htmlFor="alertes">Alertes et anomalies</label>
                 </div>
               </div>
@@ -88,11 +128,23 @@ export const ExportTab = ({
               <label className="block text-sm font-medium mb-1">Options avancées</label>
               <div className="flex flex-col gap-2 mt-2">
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" id="inclure-geoloc" className="h-4 w-4" />
+                  <input 
+                    type="checkbox" 
+                    id="inclure-geoloc" 
+                    className="h-4 w-4"
+                    checked={exportOptions.geoloc}
+                    onChange={() => handleOptionChange('geoloc')}
+                  />
                   <label htmlFor="inclure-geoloc">Inclure données de géolocalisation</label>
                 </div>
                 <div className="flex items-center gap-2">
-                  <input type="checkbox" id="grouper-semaine" className="h-4 w-4" defaultChecked />
+                  <input 
+                    type="checkbox" 
+                    id="grouper-semaine" 
+                    className="h-4 w-4"
+                    checked={exportOptions.grouperSemaine}
+                    onChange={() => handleOptionChange('grouperSemaine')}
+                  />
                   <label htmlFor="grouper-semaine">Grouper par semaine</label>
                 </div>
               </div>
@@ -100,13 +152,20 @@ export const ExportTab = ({
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={handlePrintReport}>Imprimer</Button>
+          <Button 
+            variant="outline" 
+            onClick={handlePrintReport}
+            disabled={exportInProgress}
+          >
+            <Printer className="h-4 w-4 mr-1" />
+            Imprimer
+          </Button>
           <Button 
             onClick={handleExport}
             disabled={exportInProgress}
           >
             <Download className="h-4 w-4 mr-1" />
-            Exporter les données
+            {exportInProgress ? 'Exportation...' : 'Exporter les données'}
           </Button>
         </CardFooter>
       </Card>

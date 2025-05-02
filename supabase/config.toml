@@ -15,3 +15,6 @@ verify_jwt = false
 
 [functions.update-user]
 verify_jwt = false
+
+[functions.get-export-data]
+verify_jwt = false
