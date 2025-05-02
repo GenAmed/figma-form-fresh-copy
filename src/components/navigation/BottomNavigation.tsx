@@ -1,6 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Home, Clock, CalendarDays, User } from "lucide-react";
 
 interface BottomNavigationProps {
   activeTab: string;
@@ -14,21 +15,21 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab })
           to="/home" 
           className={`flex flex-col items-center ${activeTab === 'home' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
         >
-          <i className="fa-solid fa-house text-xl"></i>
+          <Home size={20} />
           <span className="text-xs mt-1">Accueil</span>
         </Link>
         <Link 
           to="/pointage" 
           className={`flex flex-col items-center ${activeTab === 'pointage' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
         >
-          <i className="fa-regular fa-clock text-xl"></i>
+          <Clock size={20} />
           <span className="text-xs mt-1">Pointage</span>
         </Link>
         <Link 
           to="/calendrier" 
           className={`flex flex-col items-center ${activeTab === 'calendrier' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
         >
-          <i className="fa-regular fa-calendar text-xl"></i>
+          <CalendarDays size={20} />
           <span className="text-xs mt-1">Calendrier</span>
         </Link>
       </div>
