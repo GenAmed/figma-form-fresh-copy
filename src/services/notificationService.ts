@@ -4,4 +4,4 @@ export * from "./notifications/toastService";
 export * from "./notifications/reminderService";
 export * from "./notifications/desktopNotifications";
 export * from "./notifications/feedbackService";
-export type { NotificationType, ReminderPreferences } from "./notifications/types";
+export type { NotificationType, ReminderPreferences, CustomNotificationOptions } from "./notifications/types";
