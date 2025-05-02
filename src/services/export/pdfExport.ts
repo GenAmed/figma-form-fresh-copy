@@ -1,16 +1,9 @@
 
 import { ExportOptions, ExportData } from "./types";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-
-// Extend jsPDF with autotable
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => jsPDF;
-  }
-}
 
 /**
  * Exporte des données au format PDF
@@ -62,8 +55,8 @@ export const exportToPdf = async (
     return formattedRow;
   });
   
-  // Générer le tableau
-  doc.autoTable({
+  // Générer le tableau en utilisant autoTable comme une fonction importée
+  autoTable(doc, {
     head: [columns.map(col => col.header)],
     body: rows.map(row => columns.map(col => row[col.dataKey] || "")),
     startY: 40,
@@ -73,14 +66,14 @@ export const exportToPdf = async (
   });
   
   // Ajouter un pied de page
-  const pageCount = (doc as any).internal.getNumberOfPages();
+  const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.text(
       `Page ${i} sur ${pageCount}`,
-      (doc as any).internal.pageSize.width / 2,
-      (doc as any).internal.pageSize.height - 10,
+      doc.internal.pageSize.width / 2,
+      doc.internal.pageSize.height - 10,
       { align: "center" }
     );
   }
