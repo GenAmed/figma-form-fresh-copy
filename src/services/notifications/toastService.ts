@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { notificationIcons } from "@/components/notifications/NotificationIcons";
 import type { NotificationType } from "./types";
 import { sendEmailToAdmins } from "./emailService";
+import { useNavigate } from "react-router-dom";
 
 // Display a toast notification
 export const showToast = (title: string, description?: string, type: NotificationType = "info", duration = 5000): void => {
@@ -10,6 +11,19 @@ export const showToast = (title: string, description?: string, type: Notificatio
     description,
     duration,
     icon: notificationIcons[type]()
+  });
+};
+
+// Display a toast notification with a link to navigate back
+export const showToastWithBackLink = (title: string, description?: string, type: NotificationType = "info"): void => {
+  toast[type](title, {
+    description,
+    duration: 8000,
+    icon: notificationIcons[type](),
+    action: {
+      label: "Retour",
+      onClick: () => window.history.back()
+    }
   });
 };
 

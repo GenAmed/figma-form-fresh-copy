@@ -10,6 +10,7 @@ import { format, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { ExportFormat } from "@/services/export";
+import { BackButton } from "@/components/navigation/BackButton";
 
 // Import our mock data
 import { 
@@ -185,11 +186,14 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#F8F8F8] pb-16">
+    <div className="min-h-screen bg-[#F8F8F8] pb-20">
       {/* Header */}
       <header className="bg-white shadow-sm px-4 py-3 fixed w-full top-0 z-50">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold">Rapports & Exports</h1>
+          <div className="flex items-center gap-2">
+            <BackButton />
+            <h1 className="text-lg font-bold">Rapports & Exports</h1>
+          </div>
           <div className="flex items-center space-x-2">
             <Button 
               variant="outline" 
@@ -228,7 +232,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
       )}
 
       {/* Main Content */}
-      <main className="pt-16 px-4 mt-2">
+      <main className="pt-20 px-4 pb-2">
         <div className="mb-4">
           <p className="text-sm text-gray-600">
             Période: {format(dateRange.from, "dd MMM yyyy", { locale: fr })} - {format(dateRange.to, "dd MMM yyyy", { locale: fr })}
