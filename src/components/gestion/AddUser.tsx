@@ -15,32 +15,42 @@ export const AddUser: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Générer un UUID pour l'utilisateur
-      const userId = crypto.randomUUID();
-      
-      // Créer le profil directement dans la table profiles
-      const { error } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
+      // 1. Créer un utilisateur via Supabase Auth
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: values.email,
+        password: values.pin, // Utiliser le PIN comme mot de passe initial
+        email_confirm: true, // Ne pas exiger de vérification d'email
+        user_metadata: {
           name: values.name,
-          email: values.email,
-          pin: values.pin,
           role: values.role,
+          pin: values.pin,
           active: values.active,
           phone: values.phone || null,
-        });
+        }
+      });
       
-      if (error) {
-        console.error("Erreur lors de l'ajout de l'utilisateur:", error);
-        throw error;
+      if (authError) {
+        console.error("Erreur lors de la création de l'utilisateur:", authError);
+        throw authError;
       }
       
-      toast.success("Utilisateur ajouté avec succès");
-      navigate("/gestion/users");
+      // 2. Si l'utilisateur est créé avec succès
+      if (authData.user) {
+        // Le profil sera automatiquement créé via le trigger handle_new_user dans Supabase
+        toast.success("Utilisateur ajouté avec succès");
+        navigate("/gestion/users");
+      } else {
+        throw new Error("Échec de la création de l'utilisateur");
+      }
     } catch (error: any) {
       console.error("Erreur détaillée:", error);
-      toast.error(`Erreur lors de l'ajout de l'utilisateur: ${error.message || error}`);
+      
+      // Gestion des erreurs spécifiques
+      if (error.message && error.message.includes("User already registered")) {
+        toast.error("Un utilisateur avec cette adresse email existe déjà");
+      } else {
+        toast.error(`Erreur lors de l'ajout de l'utilisateur: ${error.message || error}`);
+      }
     } finally {
       setIsSubmitting(false);
     }
