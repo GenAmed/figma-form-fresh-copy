@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -15,33 +14,28 @@ export const AddUser: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // 1. Créer un utilisateur via Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: values.email,
-        password: values.pin, // Utiliser le PIN comme mot de passe initial
-        email_confirm: true, // Ne pas exiger de vérification d'email
-        user_metadata: {
-          name: values.name,
-          role: values.role,
-          pin: values.pin,
-          active: values.active,
-          phone: values.phone || null,
-        }
+      // Récupérer le token de session actuel
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Vous devez être connecté pour effectuer cette action");
+      }
+      
+      // Appeler la function Edge pour créer l'utilisateur
+      const response = await supabase.functions.invoke("create-user", {
+        body: values,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       });
       
-      if (authError) {
-        console.error("Erreur lors de la création de l'utilisateur:", authError);
-        throw authError;
+      if (response.error) {
+        throw new Error(response.error.message || "Échec de la création de l'utilisateur");
       }
       
-      // 2. Si l'utilisateur est créé avec succès
-      if (authData.user) {
-        // Le profil sera automatiquement créé via le trigger handle_new_user dans Supabase
-        toast.success("Utilisateur ajouté avec succès");
-        navigate("/gestion/users");
-      } else {
-        throw new Error("Échec de la création de l'utilisateur");
-      }
+      // Si l'utilisateur est créé avec succès
+      toast.success("Utilisateur ajouté avec succès");
+      navigate("/gestion/users");
     } catch (error: any) {
       console.error("Erreur détaillée:", error);
       
