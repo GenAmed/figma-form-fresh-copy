@@ -9,11 +9,6 @@ import { fr } from "date-fns/locale";
 declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => jsPDF;
-    internal: {
-      pageSize: { width: number; height: number };
-      pages: any[];
-      getNumberOfPages: () => number;
-    };
   }
 }
 
@@ -78,14 +73,14 @@ export const exportToPdf = async (
   });
   
   // Ajouter un pied de page
-  const pageCount = doc.internal.getNumberOfPages();
+  const pageCount = (doc as any).internal.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.text(
       `Page ${i} sur ${pageCount}`,
-      doc.internal.pageSize.width / 2,
-      doc.internal.pageSize.height - 10,
+      (doc as any).internal.pageSize.width / 2,
+      (doc as any).internal.pageSize.height - 10,
       { align: "center" }
     );
   }
