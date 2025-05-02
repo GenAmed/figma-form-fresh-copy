@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
-import { Building, Pencil, Plus, Trash2 } from "lucide-react";
+import { Building, Pencil, Plus, Trash2, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 interface WorksiteManagementProps {
@@ -84,19 +84,32 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
     navigate("/gestion/add");
   };
 
+  const handleGoToUserManagement = () => {
+    navigate("/gestion/users");
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
       {/* Header */}
       <header className="bg-[#BD1E28] text-white p-4">
         <div className="flex justify-between items-center">
           <h1 className="text-lg font-bold">Gestion des chantiers</h1>
-          <button 
-            className="bg-white bg-opacity-20 px-4 py-2 rounded-md text-sm flex items-center"
-            onClick={handleAddWorksite}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Nouveau chantier
-          </button>
+          <div className="flex space-x-2">
+            <button 
+              className="bg-white bg-opacity-20 px-4 py-2 rounded-md text-sm flex items-center"
+              onClick={handleAddWorksite}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Nouveau chantier
+            </button>
+            <button 
+              className="bg-white bg-opacity-20 px-4 py-2 rounded-md text-sm flex items-center"
+              onClick={handleGoToUserManagement}
+            >
+              <UserPlus className="w-4 h-4 mr-2" />
+              Utilisateurs
+            </button>
+          </div>
         </div>
       </header>
 
