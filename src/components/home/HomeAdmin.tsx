@@ -1,10 +1,13 @@
-import React, { useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
-import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle } from "lucide-react";
+import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle, Check, WifiOff } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { scheduleUnassignedWorkersCheck, checkAndNotifyUnassignedWorkers } from "@/services/assignment/assignmentCheckService";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface HomeAdminProps {
   user: User;
@@ -12,15 +15,33 @@ interface HomeAdminProps {
 
 export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
   const navigate = useNavigate();
+  const [isConnected, setIsConnected] = useState<boolean>(true);
+
+  // Vérifier la connexion à Supabase
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { error } = await supabase.from('worksites').select('count', { count: 'exact', head: true });
+        if (error) {
+          console.error("Erreur de connexion à Supabase:", error);
+          setIsConnected(false);
+          toast.error("Problème de connexion au serveur");
+        } else {
+          setIsConnected(true);
+        }
+      } catch (err) {
+        console.error("Erreur lors de la vérification de la connexion:", err);
+        setIsConnected(false);
+      }
+    };
+
+    checkConnection();
+  }, []);
 
   // Set up the automatic check for unassigned workers
   useEffect(() => {
     // Schedule the regular checks
     scheduleUnassignedWorkersCheck();
-    
-    // For testing, you can force a check immediately
-    // Uncomment the line below to test
-    // checkAndNotifyUnassignedWorkers(true);
   }, []);
 
   return (
@@ -32,7 +53,13 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
             <h1 className="text-lg font-bold">Bonjour, {user.name}</h1>
             <p className="text-sm opacity-90">Rôle: Administrateur</p>
           </div>
-          <div className="relative">
+          <div className="relative flex items-center">
+            <span className="mr-2">
+              {isConnected ? 
+                <Check className="h-4 w-4 text-green-400" /> : 
+                <WifiOff className="h-4 w-4 text-amber-400" />
+              }
+            </span>
             <button id="notifications-btn" className="p-2">
               <i className="fa-regular fa-bell text-xl"></i>
               <span className="absolute -top-1 -right-1 bg-yellow-500 text-xs w-5 h-5 flex items-center justify-center rounded-full">3</span>
@@ -43,6 +70,15 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
 
       {/* Main Content */}
       <main className="flex-1 p-4 min-h-screen bg-[#F8F8F8] pt-0 pb-20">
+        {!isConnected && (
+          <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 text-amber-800 flex items-center">
+            <WifiOff className="h-4 w-4 mr-2 flex-shrink-0" />
+            <p className="text-sm">
+              Mode hors ligne activé. Certaines fonctionnalités peuvent être limitées.
+            </p>
+          </div>
+        )}
+        
         {/* Quick Stats */}
         <section id="quick-stats" className="grid grid-cols-2 gap-4 mb-6">
           <Card 

@@ -1,11 +1,12 @@
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { Header } from "@/components/navigation/Header";
 import { User } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { AlertTriangle, CalendarDays, Timer } from "lucide-react";
+import { AlertTriangle, CalendarDays, Timer, WifiOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface HomeWorkerProps {
   user: User;
@@ -13,6 +14,28 @@ interface HomeWorkerProps {
 
 export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
   const navigate = useNavigate();
+  const [isConnected, setIsConnected] = useState<boolean>(true);
+
+  // Vérifier la connexion à Supabase
+  useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { error } = await supabase.from('worksites').select('count', { count: 'exact', head: true });
+        if (error) {
+          console.error("Erreur de connexion à Supabase:", error);
+          setIsConnected(false);
+          toast.error("Problème de connexion au serveur");
+        } else {
+          setIsConnected(true);
+        }
+      } catch (err) {
+        console.error("Erreur lors de la vérification de la connexion:", err);
+        setIsConnected(false);
+      }
+    };
+
+    checkConnection();
+  }, []);
 
   const handleClockButton = () => {
     navigate("/pointage");
@@ -36,6 +59,15 @@ export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
 
       {/* Main Content */}
       <div id="main-content" className="min-h-screen bg-[#F8F8F8] pt-20 pb-20">
+        {!isConnected && (
+          <div className="mx-4 bg-amber-50 border border-amber-200 rounded-md p-3 mb-4 text-amber-800 flex items-center">
+            <WifiOff className="h-4 w-4 mr-2 flex-shrink-0" />
+            <p className="text-sm">
+              Mode hors ligne activé. Certaines fonctionnalités peuvent être limitées.
+            </p>
+          </div>
+        )}
+        
         {/* Status Card */}
         <div id="status-card" className="mx-4 bg-white rounded-lg shadow-sm p-4 mb-4">
           <h2 className="text-[#333333] text-lg font-bold mb-2">Statut de pointage</h2>
