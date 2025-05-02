@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,6 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 
 // Schéma de validation pour le formulaire
 const formSchema = z.object({
@@ -30,13 +31,14 @@ export type UserFormValues = z.infer<typeof formSchema>;
 interface UserFormProps {
   onSubmit: (values: UserFormValues) => Promise<void>;
   isSubmitting: boolean;
+  initialValues?: UserFormValues;
 }
 
-export const UserForm: React.FC<UserFormProps> = ({ onSubmit, isSubmitting }) => {
+export const UserForm: React.FC<UserFormProps> = ({ onSubmit, isSubmitting, initialValues }) => {
   // Initialiser le formulaire avec react-hook-form et zod
   const form = useForm<UserFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
+    defaultValues: initialValues || {
       name: "",
       email: "",
       pin: "",
@@ -45,6 +47,13 @@ export const UserForm: React.FC<UserFormProps> = ({ onSubmit, isSubmitting }) =>
       phone: "",
     },
   });
+
+  // Mettre à jour les valeurs du formulaire lorsque initialValues change
+  useEffect(() => {
+    if (initialValues) {
+      form.reset(initialValues);
+    }
+  }, [initialValues, form]);
 
   return (
     <Form {...form}>
@@ -104,6 +113,7 @@ export const UserForm: React.FC<UserFormProps> = ({ onSubmit, isSubmitting }) =>
               <Select 
                 onValueChange={field.onChange} 
                 defaultValue={field.value}
+                value={field.value}
               >
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -145,12 +155,14 @@ export const UserForm: React.FC<UserFormProps> = ({ onSubmit, isSubmitting }) =>
             <FormItem>
               <FormLabel className="font-bold">Téléphone</FormLabel>
               <FormControl>
-                <Input {...field} type="tel" className="w-full" />
+                <Input {...field} type="tel" className="w-full" value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
+
+        <Button type="submit" className="hidden">Submit</Button>
       </form>
     </Form>
   );
