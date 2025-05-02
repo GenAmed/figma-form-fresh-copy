@@ -11,6 +11,12 @@ export interface ReminderPreferences {
   eveningReminderTime: string;
 }
 
-export interface NotificationOptions extends Omit<NotificationOptions, "icon"> {
+// Using the browser's native NotificationOptions as base type
+export interface CustomNotificationOptions {
   icon?: ReactNode;
+  body?: string;
+  tag?: string;
+  data?: any;
+  requireInteraction?: boolean;
+  silent?: boolean;
 }

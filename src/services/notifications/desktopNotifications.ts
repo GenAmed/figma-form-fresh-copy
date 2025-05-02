@@ -1,7 +1,7 @@
 
 // Service for handling desktop notifications
 import { showToast } from "./toastService";
-import type { NotificationType } from "./types";
+import type { NotificationType, CustomNotificationOptions } from "./types";
 
 // Check if browser supports notifications
 export const supportsNotifications = (): boolean => {
@@ -32,7 +32,7 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
 // Send notification using either desktop notification or toast
 export const sendNotification = (
   title: string, 
-  options?: NotificationOptions,
+  options?: CustomNotificationOptions & NotificationOptions,
   type: NotificationType = "info"
 ): void => {
   // Notification de bureau si supportée et autorisée
@@ -42,7 +42,17 @@ export const sendNotification = (
   }
   
   if (Notification.permission === "granted") {
-    new Notification(title, options);
+    // Extract properties that are compatible with browser's NotificationOptions
+    const browserOptions: NotificationOptions = {
+      body: options?.body,
+      tag: options?.tag,
+      data: options?.data,
+      requireInteraction: options?.requireInteraction,
+      silent: options?.silent,
+      // Cannot include icon if it's a ReactNode, Notification API needs string
+    };
+    
+    new Notification(title, browserOptions);
   } else {
     showToast(title, options?.body, type);
   }
