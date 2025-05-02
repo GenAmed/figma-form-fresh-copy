@@ -62,7 +62,26 @@ This project is built with:
 
 ## How can I deploy this project?
 
+### Option 1: Using Lovable
+
 Simply open [Lovable](https://lovable.dev/projects/c976df27-f904-4726-b168-7727a2e956a9) and click on Share -> Publish.
+
+### Option 2: Using GitHub Pages
+
+Ce projet est configuré pour être déployé automatiquement sur GitHub Pages en utilisant GitHub Actions.
+
+Pour déployer sur GitHub Pages :
+
+1. Assurez-vous que votre code est poussé sur la branche `main` de votre dépôt GitHub.
+2. Allez dans les paramètres de votre dépôt sur GitHub (onglet "Settings").
+3. Dans la section "Pages" du menu latéral, sous "Build and deployment", sélectionnez :
+   - Source: "GitHub Actions"
+4. Après avoir configuré les paramètres, chaque push sur la branche `main` déclenchera automatiquement un workflow de déploiement.
+5. Une fois le workflow terminé, votre site sera accessible à l'adresse `https://[votre-nom-utilisateur].github.io/[nom-du-depot]/`
+
+Le workflow GitHub Actions :
+- Construit votre application avec `npm run build`
+- Déploie les fichiers du dossier `dist` sur GitHub Pages
 
 ## Can I connect a custom domain to my Lovable project?
 
