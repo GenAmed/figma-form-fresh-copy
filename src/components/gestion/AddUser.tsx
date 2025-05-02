@@ -28,10 +28,14 @@ export const AddUser: React.FC = () => {
         throw new Error("Vous devez être connecté en tant qu'administrateur pour effectuer cette action");
       }
       
+      console.log("Envoi des données à la fonction Edge:", values);
+      
       // Appeler la function Edge pour créer l'utilisateur sans passer de token
       const response = await supabase.functions.invoke("create-user", {
         body: values
       });
+      
+      console.log("Réponse de la fonction Edge:", response);
       
       // Vérifier s'il y a une erreur dans la réponse
       if (response.error) {

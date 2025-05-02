@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const supabaseUrl = "https://jhxhhccqgbpfxwhbosdm.supabase.co";
-const supabaseServiceRole = Deno.env.get("SERVICE_ROLE_KEY") || "";
+const supabaseServiceRole = Deno.env.get("SERVICE_ROLE_KEY");
 
 serve(async (req) => {
   // Handle CORS preflight request
@@ -24,7 +24,10 @@ serve(async (req) => {
     if (!supabaseServiceRole) {
       console.error("SERVICE_ROLE_KEY is not set");
       return new Response(
-        JSON.stringify({ error: "Configuration error: SERVICE_ROLE_KEY is not set" }),
+        JSON.stringify({ 
+          error: "Configuration error: SERVICE_ROLE_KEY is not set",
+          details: "Please make sure to set the SERVICE_ROLE_KEY secret in the Supabase dashboard"
+        }),
         {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
           status: 500,
@@ -44,7 +47,7 @@ serve(async (req) => {
     const userData = await req.json();
     
     // Log pour debugging
-    console.log("Attempting to create user:", userData);
+    console.log("Attempting to create user:", JSON.stringify(userData));
 
     // Créer l'utilisateur avec l'API admin
     const { data, error } = await supabase.auth.admin.createUser({
@@ -99,7 +102,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Unexpected error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        stack: error.stack
+      }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
