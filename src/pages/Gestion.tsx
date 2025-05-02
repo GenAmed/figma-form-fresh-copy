@@ -1,7 +1,8 @@
 
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { WorksiteManagement } from "@/components/gestion/WorksiteManagement";
+import { AddWorksite } from "@/components/gestion/AddWorksite";
 import { getCurrentUser } from "@/lib/auth";
 
 const Gestion = () => {
@@ -17,7 +18,12 @@ const Gestion = () => {
     return <Navigate to="/home" />;
   }
 
-  return <WorksiteManagement user={user} />;
+  return (
+    <Routes>
+      <Route path="/" element={<WorksiteManagement user={user} />} />
+      <Route path="/add" element={<AddWorksite />} />
+    </Routes>
+  );
 };
 
 export default Gestion;

@@ -1,9 +1,11 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Building, Pencil, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface WorksiteManagementProps {
   user: User;
@@ -19,6 +21,7 @@ type Worksite = {
 };
 
 export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) => {
+  const navigate = useNavigate();
   // Sample worksites data
   const [worksites, setWorksites] = useState<Worksite[]>([
     {
@@ -66,9 +69,13 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
   };
 
   const handleDelete = (id: string) => {
-    // Future implementation for deleting a worksite
-    console.log(`Deleting worksite with id: ${id}`);
+    // Implementation for deleting a worksite
+    toast.success("Chantier supprimé avec succès");
     setWorksites(worksites.filter(worksite => worksite.id !== id));
+  };
+
+  const handleAddWorksite = () => {
+    navigate("/gestion/add");
   };
 
   return (
@@ -79,7 +86,7 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
           <h1 className="text-lg font-bold">Gestion des chantiers</h1>
           <button 
             className="bg-white bg-opacity-20 px-4 py-2 rounded-md text-sm flex items-center"
-            onClick={() => console.log("New worksite button clicked")}
+            onClick={handleAddWorksite}
           >
             <Plus className="w-4 h-4 mr-2" />
             Nouveau chantier
