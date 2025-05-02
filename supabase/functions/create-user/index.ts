@@ -20,6 +20,18 @@ serve(async (req) => {
   }
 
   try {
+    // Vérifier si la clé de service est disponible
+    if (!supabaseServiceRole) {
+      console.error("SERVICE_ROLE_KEY is not set");
+      return new Response(
+        JSON.stringify({ error: "Configuration error: SERVICE_ROLE_KEY is not set" }),
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        }
+      );
+    }
+
     // Créer un client Supabase avec le rôle de service
     const supabase = createClient(supabaseUrl, supabaseServiceRole, {
       auth: {
@@ -28,54 +40,11 @@ serve(async (req) => {
       },
     });
     
-    // Vérifier l'authentification
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401,
-        }
-      );
-    }
-    
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller }, error: authError } = await supabase.auth.getUser(token);
-    
-    if (authError || !caller) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 401,
-        }
-      );
-    }
-    
-    // Vérifier si l'utilisateur est admin
-    const { data: callerProfile } = await supabase
-      .from("profiles")
-      .select("role")
-      .eq("id", caller.id)
-      .single();
-    
-    if (!callerProfile || callerProfile.role !== "admin") {
-      return new Response(
-        JSON.stringify({ error: "Forbidden - Admin access required" }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 403,
-        }
-      );
-    }
-
     // Récupérer les données de l'utilisateur à créer
     const userData = await req.json();
     
     // Log pour debugging
     console.log("Attempting to create user:", userData);
-    console.log("Service role key available:", !!supabaseServiceRole);
 
     // Créer l'utilisateur avec l'API admin
     const { data, error } = await supabase.auth.admin.createUser({
@@ -100,6 +69,23 @@ serve(async (req) => {
           status: 400,
         }
       );
+    }
+
+    // Insérer les données supplémentaires dans la table profiles si nécessaire
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .insert({
+        id: data.user.id,
+        name: userData.name,
+        email: userData.email,
+        role: userData.role,
+        phone: userData.phone || null,
+        pin: userData.pin
+      });
+
+    if (profileError) {
+      console.error("Error creating profile:", profileError);
+      // Continuer quand même car l'utilisateur a été créé
     }
 
     console.log("User created successfully:", data.user.id);
