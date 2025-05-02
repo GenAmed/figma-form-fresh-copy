@@ -24,33 +24,45 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab })
         </Link>
         
         {isAdmin ? (
-          <Link 
-            to="/gestion" 
-            className={`flex flex-col items-center ${activeTab === 'gestion' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
-          >
-            <Settings size={20} />
-            <span className="text-xs mt-1">Gestion</span>
-          </Link>
-        ) : (
-          <Link 
-            to="/pointage" 
-            className={`flex flex-col items-center ${activeTab === 'pointage' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
-          >
-            <Clock size={20} />
-            <span className="text-xs mt-1">Pointage</span>
-          </Link>
-        )}
-        
-        <Link 
-          to="/calendrier" 
-          className={`flex flex-col items-center ${activeTab === 'calendrier' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
-        >
-          <CalendarDays size={20} />
-          <span className="text-xs mt-1">Calendrier</span>
-        </Link>
-        
-        {!isAdmin && (
           <>
+            <Link 
+              to="/gestion" 
+              className={`flex flex-col items-center ${activeTab === 'gestion' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
+            >
+              <Settings size={20} />
+              <span className="text-xs mt-1">Gestion</span>
+            </Link>
+            <Link 
+              to="/calendrier" 
+              className={`flex flex-col items-center ${activeTab === 'calendrier' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
+            >
+              <CalendarDays size={20} />
+              <span className="text-xs mt-1">Calendrier</span>
+            </Link>
+            <Link 
+              to="/profil" 
+              className={`flex flex-col items-center ${activeTab === 'profil' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
+            >
+              <User size={20} />
+              <span className="text-xs mt-1">Profil</span>
+            </Link>
+          </>
+        ) : (
+          <>
+            <Link 
+              to="/pointage" 
+              className={`flex flex-col items-center ${activeTab === 'pointage' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
+            >
+              <Clock size={20} />
+              <span className="text-xs mt-1">Pointage</span>
+            </Link>
+            <Link 
+              to="/calendrier" 
+              className={`flex flex-col items-center ${activeTab === 'calendrier' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
+            >
+              <CalendarDays size={20} />
+              <span className="text-xs mt-1">Calendrier</span>
+            </Link>
             <Link 
               to="/suivi-hebdo" 
               className={`flex flex-col items-center ${activeTab === 'suivi-hebdo' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}

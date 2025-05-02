@@ -27,6 +27,11 @@ export const Header: React.FC<HeaderProps> = ({
     navigate("/");
   };
 
+  const handleProfileClick = () => {
+    navigate("/profil");
+    setShowMenu(false);
+  };
+
   return (
     <div className="fixed top-0 left-0 right-0 bg-gray-800 text-white px-4 py-3 z-50">
       <div className="flex justify-between items-center">
@@ -52,6 +57,12 @@ export const Header: React.FC<HeaderProps> = ({
           
           {showMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50">
+              <button 
+                onClick={handleProfileClick}
+                className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Mon profil
+              </button>
               <button 
                 onClick={handleLogout}
                 className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
