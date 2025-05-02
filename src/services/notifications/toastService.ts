@@ -27,8 +27,9 @@ export const showToast = (
         }
       }
     } : undefined,
-    // Make the entire toast clickable
-    onClick: navigateTo ? () => {
+    // We can't use onClick directly as it's not part of ExternalToast type
+    // Instead we can use onDismiss which is called when toast is dismissed
+    onDismiss: navigateTo ? () => {
       if (navigateTo.startsWith('http')) {
         window.location.href = navigateTo;
       } else {
