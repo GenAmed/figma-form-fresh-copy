@@ -1,5 +1,6 @@
 
 import { toast } from "sonner";
+import type { NotificationType } from "./types";
 
 /**
  * Display a toast notification
@@ -12,7 +13,7 @@ import { toast } from "sonner";
 export const showToast = (
   title: string, 
   message: string, 
-  type: "success" | "error" | "warning" | "info" = "info",
+  type: NotificationType = "info",
   duration: number = 5000,
   action?: string
 ) => {

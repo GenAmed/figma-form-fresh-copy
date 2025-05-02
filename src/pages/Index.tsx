@@ -7,7 +7,7 @@ const Index: React.FC = () => {
   return (
     <div className="w-full min-h-screen">
       <LoginPage />
-      <Toaster position="top-center" richColors closeButton />
+      {/* Nous n'ajoutons pas le Toaster ici car il est déjà dans App.tsx */}
     </div>
   );
 };
