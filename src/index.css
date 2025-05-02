@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -88,14 +89,36 @@
     --sidebar-border: 240 3.7% 15.9%;
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* FontAwesome Icons */
+  .fa-house::before {
+    content: "\f015";
+  }
+  .fa-clock::before {
+    content: "\f017";
+  }
+  .fa-calendar::before {
+    content: "\f133";
+  }
+  .fa-triangle-exclamation::before {
+    content: "\f071";
+  }
+}
+
+@layer base {
+  * {
+    font-family: "Inter", sans-serif;
+  }
+
+  ::-webkit-scrollbar {
+    display: none;
   }
 }

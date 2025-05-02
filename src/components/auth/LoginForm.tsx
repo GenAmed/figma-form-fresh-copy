@@ -1,8 +1,10 @@
+
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InputField } from "./InputField";
+import { useNavigate } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z
@@ -16,6 +18,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginForm: React.FC = () => {
+  const navigate = useNavigate();
   const {
     register,
     handleSubmit,
@@ -37,7 +40,8 @@ export const LoginForm: React.FC = () => {
 
   const onSubmit = (data: LoginFormValues) => {
     console.log("Form submitted:", data);
-    // Here you would typically handle the login logic
+    // Simulating a successful login, navigating to the home page
+    navigate("/home");
   };
 
   const handleInputChange =
