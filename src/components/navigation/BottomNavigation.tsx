@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Clock, CalendarDays, Settings, User } from "lucide-react";
+import { Home, Clock, CalendarDays, Settings, User, BarChart } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 
 interface BottomNavigationProps {
@@ -50,13 +50,22 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab })
         </Link>
         
         {!isAdmin && (
-          <Link 
-            to="/profil" 
-            className={`flex flex-col items-center ${activeTab === 'profil' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
-          >
-            <User size={20} />
-            <span className="text-xs mt-1">Profil</span>
-          </Link>
+          <>
+            <Link 
+              to="/suivi-hebdo" 
+              className={`flex flex-col items-center ${activeTab === 'suivi-hebdo' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
+            >
+              <BarChart size={20} />
+              <span className="text-xs mt-1">Suivi</span>
+            </Link>
+            <Link 
+              to="/profil" 
+              className={`flex flex-col items-center ${activeTab === 'profil' ? 'text-[#BD1E28]' : 'text-[#666666]'} cursor-pointer`}
+            >
+              <User size={20} />
+              <span className="text-xs mt-1">Profil</span>
+            </Link>
+          </>
         )}
       </div>
     </div>

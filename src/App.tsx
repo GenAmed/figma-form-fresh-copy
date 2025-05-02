@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import Pointage from "./pages/Pointage";
 import Calendar from "./pages/Calendar";
 import Gestion from "./pages/Gestion";
+import WeeklySummary from "./pages/WeeklySummary";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/home" element={<Home />} />
           <Route path="/pointage" element={<Pointage />} />
           <Route path="/calendrier" element={<Calendar />} />
+          <Route path="/suivi-hebdo" element={<WeeklySummary />} />
           <Route path="/gestion/*" element={<Gestion />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
