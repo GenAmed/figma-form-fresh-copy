@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, Pencil, Trash2, Mail, Phone, UserPlus, CheckCircle } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Mail, Phone, UserPlus, CheckCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 export const UserDetails: React.FC = () => {
@@ -47,6 +47,10 @@ export const UserDetails: React.FC = () => {
     // Implementation for deleting a user
     toast.success("Utilisateur supprimé avec succès");
     navigate("/gestion/users");
+  };
+
+  const handleAddAssignment = () => {
+    navigate(`/gestion/users/details/${id}/add-assignment`);
   };
 
   const getRoleBadge = (role: string) => {
@@ -116,7 +120,18 @@ export const UserDetails: React.FC = () => {
 
         {/* Current Assignments Section */}
         <section className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <h3 className="text-lg font-bold text-[#333333] mb-4">Assignations actuelles</h3>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-[#333333]">Assignations actuelles</h3>
+            <Button 
+              size="sm" 
+              variant="outline"
+              className="text-[#BD1E28] border-[#BD1E28]"
+              onClick={handleAddAssignment}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Ajouter
+            </Button>
+          </div>
           
           <div className="space-y-4">
             {user.assignments.map((assignment) => (
