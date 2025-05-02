@@ -5,6 +5,7 @@ import { WorksiteManagement } from "@/components/gestion/WorksiteManagement";
 import { AddWorksite } from "@/components/gestion/AddWorksite";
 import { WorksiteDetails } from "@/components/gestion/WorksiteDetails";
 import { UserManagement } from "@/components/gestion/UserManagement";
+import { AddUser } from "@/components/gestion/AddUser";
 import { getCurrentUser } from "@/lib/auth";
 
 const Gestion = () => {
@@ -26,6 +27,7 @@ const Gestion = () => {
       <Route path="/add" element={<AddWorksite />} />
       <Route path="/details/:id" element={<WorksiteDetails />} />
       <Route path="/users" element={<UserManagement user={user} />} />
+      <Route path="/users/add" element={<AddUser />} />
     </Routes>
   );
 };

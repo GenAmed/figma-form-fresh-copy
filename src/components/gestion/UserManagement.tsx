@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -72,8 +71,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
   };
 
   const handleAddUser = () => {
-    // Future implementation for adding a user
-    toast.info("Fonction d'ajout d'utilisateur à venir");
+    navigate("/gestion/users/add");
   };
 
   return (
