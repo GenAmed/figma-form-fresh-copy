@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 const supabaseUrl = "https://jhxhhccqgbpfxwhbosdm.supabase.co";
-const supabaseServiceRole = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+const supabaseServiceRole = Deno.env.get("SERVICE_ROLE_KEY") || "";
 
 serve(async (req) => {
   // Handle CORS preflight request
@@ -73,6 +73,10 @@ serve(async (req) => {
     // Récupérer les données de l'utilisateur à créer
     const userData = await req.json();
     
+    // Log pour debugging
+    console.log("Attempting to create user:", userData);
+    console.log("Service role key available:", !!supabaseServiceRole);
+
     // Créer l'utilisateur avec l'API admin
     const { data, error } = await supabase.auth.admin.createUser({
       email: userData.email,
@@ -88,6 +92,7 @@ serve(async (req) => {
     });
 
     if (error) {
+      console.error("Error creating user:", error);
       return new Response(
         JSON.stringify({ error: error.message }),
         {
@@ -97,6 +102,7 @@ serve(async (req) => {
       );
     }
 
+    console.log("User created successfully:", data.user.id);
     return new Response(
       JSON.stringify({ data }),
       {
@@ -105,6 +111,7 @@ serve(async (req) => {
       }
     );
   } catch (error) {
+    console.error("Unexpected error:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
