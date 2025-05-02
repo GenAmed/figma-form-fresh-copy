@@ -1,12 +1,12 @@
 
 import React, { useState, forwardRef } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 
 interface InputFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   type: string;
   placeholder: string;
-  icon: string;
+  icon: string; // We'll keep this for backward compatibility but use Lucide icons
   showPasswordToggle?: boolean;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   value?: string;
@@ -28,18 +28,25 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(({
     setShowPassword(!showPassword);
   };
 
+  // Determine which icon to show based on the icon string
+  const renderIcon = () => {
+    if (icon.includes("icon-email")) {
+      return <Mail size={16} className="text-gray-400" />;
+    } else if (icon.includes("icon-password")) {
+      return <Lock size={16} className="text-gray-400" />;
+    }
+    return null;
+  };
+
   return (
     <div className="w-full mb-4">
       <label className="font-normal text-sm text-[#333] mb-2 block">
         {label}
       </label>
       <div className="relative w-full">
-        <div
-          className="absolute left-3 top-1/2 transform -translate-y-1/2"
-          dangerouslySetInnerHTML={{
-            __html: icon,
-          }}
-        />
+        <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+          {renderIcon()}
+        </div>
         <input
           ref={ref}
           type={showPassword ? "text" : type}
