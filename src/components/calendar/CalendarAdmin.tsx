@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
@@ -226,7 +225,7 @@ export const CalendarAdmin: React.FC<CalendarAdminProps> = ({ user }) => {
                   
                   return (
                     <div className="relative h-full w-full flex items-center justify-center">
-                      {props.children}
+                      {props.day}
                       {dayAssignments.length > 0 && (
                         <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 flex space-x-0.5">
                           <div className="w-1 h-1 rounded-full bg-[#BD1E28]"></div>

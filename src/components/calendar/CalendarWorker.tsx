@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
@@ -154,7 +153,7 @@ export const CalendarWorker: React.FC<CalendarWorkerProps> = ({ user }) => {
                 
                 return (
                   <div className="relative h-full w-full flex items-center justify-center">
-                    {props.children}
+                    {props.day}
                     {hasAssignment && (
                       <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 rounded-full bg-[#BD1E28]"></div>
                     )}
