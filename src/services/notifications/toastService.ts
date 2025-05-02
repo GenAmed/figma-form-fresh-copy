@@ -18,26 +18,25 @@ export const showToast = (
     icon: notificationIcons[type]()
   };
 
-  // If there's a navigation URL, make the toast clickable
+  // Always add a button for navigation if a URL is provided
   if (navigateTo) {
-    // Add an action button for explicit navigation
     toastOptions.action = {
-      label: "Voir",
+      label: "Voir détails",
       onClick: () => {
         if (navigateTo.startsWith('http')) {
-          window.location.href = navigateTo;
+          window.open(navigateTo, "_blank");
         } else {
-          window.location.href = navigateTo; // Use React Router in a real app
+          window.location.href = navigateTo;
         }
       }
     };
-
-    // Make the entire toast clickable by using the onAutoClose callback
-    toastOptions.onDismiss = () => {
+    
+    // Make the entire toast clickable
+    toastOptions.onClickActivity = () => {
       if (navigateTo.startsWith('http')) {
-        window.location.href = navigateTo;
+        window.open(navigateTo, "_blank");
       } else {
-        window.location.href = navigateTo; // Use React Router in a real app
+        window.location.href = navigateTo;
       }
     };
   }

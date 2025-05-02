@@ -2,6 +2,7 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { showToast } from "@/services/notifications/toastService";
 
 interface UnassignedWorkerAlertProps {
   unassignedWorkers: any[];
@@ -17,6 +18,15 @@ export const UnassignedWorkerAlert: React.FC<UnassignedWorkerAlertProps> = ({ un
   const handleClick = () => {
     // Navigate to the user management page
     navigate("/gestion/users");
+    
+    // Show a toast with details about unassigned workers
+    showToast(
+      `${unassignedWorkers.length} ouvrier(s) non-assignés`, 
+      `Visualisez les détails de chaque ouvrier non assigné`,
+      "warning",
+      5000,
+      "/gestion/users"
+    );
   };
 
   return (

@@ -4,6 +4,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle, Info, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 type FeedbackType = "success" | "error" | "warning" | "info";
 
@@ -16,6 +17,7 @@ interface FeedbackAlertProps {
   autoClose?: boolean;
   duration?: number;
   navigateTo?: string;
+  buttonText?: string;
 }
 
 export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
@@ -27,6 +29,7 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
   autoClose = true,
   duration = 5000,
   navigateTo,
+  buttonText = "Voir détails",
 }) => {
   const [isVisible, setIsVisible] = React.useState(true);
   const navigate = useNavigate();
@@ -65,6 +68,7 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
           alertClass: "border-green-200 bg-green-50",
           titleClass: "text-green-800",
           descriptionClass: "text-green-700",
+          buttonClass: "bg-green-100 hover:bg-green-200 text-green-800",
         };
       case "error":
         return {
@@ -72,6 +76,7 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
           alertClass: "border-red-200 bg-red-50",
           titleClass: "text-red-800",
           descriptionClass: "text-red-700",
+          buttonClass: "bg-red-100 hover:bg-red-200 text-red-800",
         };
       case "warning":
         return {
@@ -79,6 +84,7 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
           alertClass: "border-amber-200 bg-amber-50",
           titleClass: "text-amber-800",
           descriptionClass: "text-amber-700",
+          buttonClass: "bg-amber-100 hover:bg-amber-200 text-amber-800",
         };
       case "info":
       default:
@@ -87,17 +93,15 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
           alertClass: "border-blue-200 bg-blue-50",
           titleClass: "text-blue-800",
           descriptionClass: "text-blue-700",
+          buttonClass: "bg-blue-100 hover:bg-blue-200 text-blue-800",
         };
     }
   };
 
-  const { icon, alertClass, titleClass, descriptionClass } = getIconAndClass();
+  const { icon, alertClass, titleClass, descriptionClass, buttonClass } = getIconAndClass();
 
   return (
-    <Alert 
-      className={cn("relative", alertClass, navigateTo ? "cursor-pointer hover:opacity-90 transition-opacity" : "", className)}
-      onClick={navigateTo ? handleClick : undefined}
-    >
+    <Alert className={cn("relative", alertClass, className)}>
       {icon}
       <AlertTitle className={cn("ml-2", titleClass)}>{title}</AlertTitle>
       {description && (
@@ -105,10 +109,24 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
           {description}
         </AlertDescription>
       )}
+      
+      {navigateTo && (
+        <div className="mt-2 ml-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleClick}
+            className={cn("text-xs py-1 px-2 h-auto", buttonClass)}
+          >
+            {buttonText}
+          </Button>
+        </div>
+      )}
+      
       {onDismiss && (
         <button
           onClick={(e) => {
-            e.stopPropagation(); // Prevent triggering parent click
+            e.stopPropagation();
             setIsVisible(false);
             onDismiss();
           }}
