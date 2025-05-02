@@ -18,7 +18,22 @@ export const showToast = (
     icon: notificationIcons[type](),
     action: navigateTo ? {
       label: "Voir",
-      onClick: () => window.location.href = navigateTo
+      onClick: () => {
+        // Use window.location or history.push depending on whether it's an absolute URL
+        if (navigateTo.startsWith('http')) {
+          window.location.href = navigateTo;
+        } else {
+          window.location.href = navigateTo; // Use React Router in a real app
+        }
+      }
+    } : undefined,
+    // Add an onClick handler to the toast itself
+    onClickToast: navigateTo ? () => {
+      if (navigateTo.startsWith('http')) {
+        window.location.href = navigateTo;
+      } else {
+        window.location.href = navigateTo; // Use React Router in a real app
+      }
     } : undefined
   });
 };

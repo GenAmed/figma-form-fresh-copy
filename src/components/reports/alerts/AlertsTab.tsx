@@ -43,7 +43,11 @@ export const AlertsTab = ({
   // Handle alert click to navigate
   const handleAlertClick = (alert: Alert) => {
     if (alert.linkedRoute) {
-      navigate(alert.linkedRoute);
+      if (alert.linkedRoute.startsWith('http')) {
+        window.location.href = alert.linkedRoute;
+      } else {
+        navigate(alert.linkedRoute);
+      }
     }
   };
 
@@ -75,6 +79,8 @@ export const AlertsTab = ({
                                   '#3b82f6'
                 }}
                 onClick={() => alert.linkedRoute && handleAlertClick(alert)}
+                role={alert.linkedRoute ? "button" : undefined}
+                tabIndex={alert.linkedRoute ? 0 : undefined}
               >
                 <div className="flex justify-between items-start">
                   <div className="flex items-start gap-3">

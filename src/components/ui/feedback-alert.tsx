@@ -48,7 +48,11 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
 
   const handleClick = () => {
     if (navigateTo) {
-      navigate(navigateTo);
+      if (navigateTo.startsWith('http')) {
+        window.location.href = navigateTo;
+      } else {
+        navigate(navigateTo);
+      }
     }
   };
 
@@ -91,7 +95,7 @@ export const FeedbackAlert: React.FC<FeedbackAlertProps> = ({
 
   return (
     <Alert 
-      className={cn("relative", alertClass, navigateTo ? "cursor-pointer hover:bg-opacity-80" : "", className)}
+      className={cn("relative", alertClass, navigateTo ? "cursor-pointer hover:opacity-90 transition-opacity" : "", className)}
       onClick={navigateTo ? handleClick : undefined}
     >
       {icon}
