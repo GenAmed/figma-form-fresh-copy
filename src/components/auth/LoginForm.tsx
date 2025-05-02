@@ -75,7 +75,7 @@ export const LoginForm: React.FC = () => {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="w-full max-w-[358px] bg-white shadow-[0px_2px_4px_rgba(0,0,0,0.1),0px_4px_6px_rgba(0,0,0,0.1)] mt-8 p-6 rounded-lg max-md:px-4 max-md:py-6 max-sm:px-2 max-sm:py-6"
+      className="w-full max-w-md bg-white shadow-md rounded-lg p-6 sm:p-8"
     >
       <InputField
         label="Email / Identifiant"
@@ -122,7 +122,7 @@ export const LoginForm: React.FC = () => {
 
       <button
         type="submit"
-        className="w-full bg-[#BD1E28] text-white font-medium text-base cursor-pointer text-center px-0 py-3.5 rounded-md border-[none]"
+        className="w-full bg-[#BD1E28] text-white font-medium text-base cursor-pointer text-center px-4 py-3.5 rounded-md border-none hover:bg-[#a51a22] transition-colors"
       >
         Se connecter
       </button>
