@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { InputField } from "./InputField";
 import { useNavigate } from "react-router-dom";
 import { authenticateUser, setCurrentUser } from "@/lib/auth";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z
@@ -24,7 +24,7 @@ export const LoginForm: React.FC = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -40,21 +40,36 @@ export const LoginForm: React.FC = () => {
     rememberMe: false,
   });
 
+  // Fonction pour activer la vibration sur mobile
+  const triggerHapticFeedback = () => {
+    if (window.navigator && window.navigator.vibrate) {
+      window.navigator.vibrate(100); // vibration de 100ms
+    }
+  };
+
   const onSubmit = (data: LoginFormValues) => {
+    triggerHapticFeedback();
+    
     const user = authenticateUser(data.email, data.password);
     
     if (user) {
       setCurrentUser(user);
-      navigate("/home");
-      toast({
-        title: "Connexion réussie",
+      
+      toast.success("Connexion réussie", {
         description: `Bienvenue ${user.name}`,
+        duration: 3000,
+        className: "success-toast",
       });
+      
+      // Délai avant redirection pour voir le toast
+      setTimeout(() => {
+        navigate("/home");
+      }, 1000);
     } else {
-      toast({
-        title: "Erreur de connexion",
+      toast.error("Échec de connexion", {
         description: "Email ou mot de passe incorrect",
-        variant: "destructive"
+        duration: 4000,
+        className: "error-toast",
       });
     }
   };
@@ -110,7 +125,7 @@ export const LoginForm: React.FC = () => {
         <input
           type="checkbox"
           id="remember"
-          className="mr-2"
+          className="mr-2 h-4 w-4 rounded border-gray-300 text-[#BD1E28] focus:ring-[#BD1E28]"
           {...register("rememberMe")}
           onChange={handleInputChange("rememberMe")}
           checked={formValues.rememberMe}
@@ -122,13 +137,29 @@ export const LoginForm: React.FC = () => {
 
       <button
         type="submit"
-        className="w-full bg-[#BD1E28] text-white font-medium text-base cursor-pointer text-center px-4 py-3.5 rounded-md border-none hover:bg-[#a51a22] transition-colors"
+        disabled={isSubmitting}
+        className="w-full bg-[#BD1E28] text-white font-medium text-base cursor-pointer text-center px-4 py-3.5 rounded-md border-none hover:bg-[#a51a22] transition-colors focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 disabled:opacity-70 flex justify-center items-center"
       >
+        {isSubmitting ? (
+          <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-solid border-current border-e-transparent align-[-0.125em] mr-2"></span>
+        ) : null}
         Se connecter
       </button>
 
       <div className="text-center font-normal text-sm text-[#666] mt-4">
-        Problème de connexion?
+        <button 
+          type="button" 
+          className="text-[#BD1E28] hover:underline focus:outline-none"
+          onClick={() => {
+            triggerHapticFeedback();
+            toast.info("Aide", { 
+              description: "Contactez votre administrateur pour réinitialiser votre accès", 
+              duration: 5000 
+            });
+          }}
+        >
+          Problème de connexion?
+        </button>
       </div>
 
       <div className="mt-6 border-t pt-4">
