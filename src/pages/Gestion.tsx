@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { WorksiteManagement } from "@/components/gestion/WorksiteManagement";
 import { AddWorksite } from "@/components/gestion/AddWorksite";
 import { WorksiteDetails } from "@/components/gestion/WorksiteDetails";
+import { EditWorksite } from "@/components/gestion/EditWorksite";
 import { UserManagement } from "@/components/gestion/UserManagement";
 import { AddUser } from "@/components/gestion/AddUser";
 import { UserDetails } from "@/components/gestion/UserDetails";
@@ -28,6 +29,7 @@ const Gestion = () => {
       <Route path="/" element={<WorksiteManagement user={user} />} />
       <Route path="/add" element={<AddWorksite />} />
       <Route path="/details/:id" element={<WorksiteDetails />} />
+      <Route path="/edit/:id" element={<EditWorksite />} />
       <Route path="/users" element={<UserManagement user={user} />} />
       <Route path="/users/add" element={<AddUser />} />
       <Route path="/users/details/:id" element={<UserDetails />} />

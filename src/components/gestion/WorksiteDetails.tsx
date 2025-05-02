@@ -53,8 +53,8 @@ export const WorksiteDetails: React.FC = () => {
   };
 
   const handleEdit = () => {
-    // Future implementation for editing a worksite
-    toast.info("Fonctionnalité de modification à venir");
+    // Rediriger vers la page d'édition du chantier
+    navigate(`/gestion/edit/${id}`);
   };
 
   const handleDelete = () => {
