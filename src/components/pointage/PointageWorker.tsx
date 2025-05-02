@@ -71,6 +71,14 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
   // Fonction pour convertir les coordonnées en adresse
   const getAddressFromCoordinates = async (lat: number, lng: number): Promise<string> => {
     try {
+      // Solution de contournement en utilisant une API proxy ou un service alternatif
+      // Pour le moment, nous utilisons une version simplifiée qui formate juste les coordonnées
+      // car l'API Nominatim bloque les requêtes depuis notre domaine
+      
+      // Formatage basique des coordonnées comme adresse de secours
+      return `Localisation: ${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      
+      /* La méthode ci-dessous est commentée car elle ne fonctionne pas actuellement
       const response = await fetch(
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`
       );
@@ -81,14 +89,12 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       
       const data = await response.json();
       
-      // Formatage de l'adresse
       if (data && data.display_name) {
-        // On peut aussi créer un format plus court avec des éléments spécifiques
-        // par exemple: route, house_number, village/town/city, postcode
         return data.display_name;
       } else {
         return "Adresse non disponible";
       }
+      */
     } catch (error) {
       console.error("Erreur de géocodage inverse:", error);
       return "Erreur lors de la récupération de l'adresse";
