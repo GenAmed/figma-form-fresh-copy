@@ -6,6 +6,7 @@ export interface User {
   name: string;
   role: "ouvrier" | "admin";
   avatarUrl: string;
+  phone?: string;  // Ajout de la propriété phone optionnelle
 }
 
 // Test users
@@ -15,14 +16,16 @@ export const testUsers: User[] = [
     email: "ouvrier@avem.fr", 
     name: "Thomas",
     role: "ouvrier",
-    avatarUrl: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg"
+    avatarUrl: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+    phone: "06 12 34 56 78" // Ajout du numéro de téléphone
   },
   {
     id: "2",
     email: "admin@avem.fr",
     name: "Sarah",
     role: "admin",
-    avatarUrl: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg"
+    avatarUrl: "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-1.jpg",
+    phone: "06 98 76 54 32" // Ajout du numéro de téléphone
   }
 ];
 

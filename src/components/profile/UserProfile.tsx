@@ -1,4 +1,3 @@
-
 import React from "react";
 import { User } from "@/lib/auth";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -47,7 +46,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Téléphone</label>
-                  <p>{user.phone || "Non défini"}</p>
+                  <p>{"Non défini"}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Dernière connexion</label>

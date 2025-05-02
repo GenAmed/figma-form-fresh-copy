@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { User } from "@/lib/auth";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -6,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { FileExport, Filter, AlertTriangle, Table } from "lucide-react";
+import { FileText, Filter, AlertTriangle, Table as TableIcon } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChartContainer } from "@/components/ui/chart";
@@ -16,6 +15,16 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableFooter,
+  TableHead,
+  TableRow,
+  TableCell,
+  TableCaption,
+} from "@/components/ui/table";
 
 interface ReportsAdminProps {
   user: User;
@@ -131,7 +140,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
               size="sm"
               onClick={handleExport}
             >
-              <FileExport className="h-4 w-4 mr-1" />
+              <FileText className="h-4 w-4 mr-1" />
               Exporter
             </Button>
           </div>
@@ -465,7 +474,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
                 <Button variant="outline" onClick={() => {
                   toast.success("Données chargées en format Excel");
                 }}>
-                  <Table className="h-4 w-4 mr-1" />
+                  <TableIcon className="h-4 w-4 mr-1" />
                   Voir plus
                 </Button>
               </CardFooter>
@@ -537,7 +546,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
               <CardFooter className="flex justify-between">
                 <Button variant="outline" onClick={handlePrintReport}>Imprimer</Button>
                 <Button onClick={handleExport}>
-                  <FileExport className="h-4 w-4 mr-1" />
+                  <FileText className="h-4 w-4 mr-1" />
                   Exporter les données
                 </Button>
               </CardFooter>
@@ -596,4 +605,3 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
     </div>
   );
 };
-
