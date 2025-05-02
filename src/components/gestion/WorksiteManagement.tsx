@@ -63,12 +63,18 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
     }
   };
 
-  const handleEdit = (id: string) => {
+  const handleViewDetails = (id: string) => {
+    navigate(`/gestion/details/${id}`);
+  };
+
+  const handleEdit = (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
     // Future implementation for editing a worksite
     console.log(`Editing worksite with id: ${id}`);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = (id: string, event: React.MouseEvent) => {
+    event.stopPropagation();
     // Implementation for deleting a worksite
     toast.success("Chantier supprimé avec succès");
     setWorksites(worksites.filter(worksite => worksite.id !== id));
@@ -99,7 +105,11 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
         {/* Worksites List */}
         <section className="space-y-4">
           {worksites.map((worksite) => (
-            <Card key={worksite.id} className="bg-white rounded-lg shadow-sm p-4">
+            <Card 
+              key={worksite.id} 
+              className="bg-white rounded-lg shadow-sm p-4 cursor-pointer"
+              onClick={() => handleViewDetails(worksite.id)}
+            >
               <div className="flex justify-between items-start mb-3">
                 <div>
                   <h2 className="font-bold text-[#333333]">{worksite.name}</h2>
@@ -113,13 +123,13 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
               <div className="flex justify-end space-x-3">
                 <button 
                   className="p-2 text-[#666666] hover:text-[#BD1E28]"
-                  onClick={() => handleEdit(worksite.id)}
+                  onClick={(e) => handleEdit(worksite.id, e)}
                 >
                   <Pencil className="w-5 h-5" />
                 </button>
                 <button 
                   className="p-2 text-[#666666] hover:text-[#BD1E28]"
-                  onClick={() => handleDelete(worksite.id)}
+                  onClick={(e) => handleDelete(worksite.id, e)}
                 >
                   <Trash2 className="w-5 h-5" />
                 </button>
