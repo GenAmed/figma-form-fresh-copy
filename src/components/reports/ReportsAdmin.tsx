@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
-import { FileText, Filter, AlertTriangle, Table as TableIcon } from "lucide-react";
+import { FileText, Filter, AlertTriangle, Table as TableIcon, FileExcel, FileCsv, FilePdf, Download } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { fr } from "date-fns/locale";
 import { ChartContainer } from "@/components/ui/chart";
@@ -25,6 +25,7 @@ import {
   TableCell,
   TableCaption,
 } from "@/components/ui/table";
+import { exportData, ExportFormat } from "@/services/export";
 
 interface ReportsAdminProps {
   user: User;
@@ -84,8 +85,9 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
   
   const [selectedChantiers, setSelectedChantiers] = useState<string[]>([]);
   const [selectedEmployes, setSelectedEmployes] = useState<string[]>([]);
-  const [exportFormat, setExportFormat] = useState<string>("excel");
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("excel");
   const [showFilters, setShowFilters] = useState<boolean>(false);
+  const [exportInProgress, setExportInProgress] = useState<boolean>(false);
 
   const toggleChantierSelection = (chantierId: string) => {
     if (selectedChantiers.includes(chantierId)) {
@@ -103,12 +105,70 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
     }
   };
 
-  const handleExport = () => {
-    // Simulation d'export
-    toast.success(`Exportation en ${exportFormat.toUpperCase()} démarrée`);
-    setTimeout(() => {
-      toast.success("Exportation terminée avec succès!");
-    }, 2000);
+  // Fonction pour générer les données d'export selon les filtres actuels
+  const generateExportData = () => {
+    // Simulation de données pour l'export
+    // Dans une vraie application, cela viendrait d'une API ou d'un service
+    const detailedData = [
+      { employé: "Jean Dupont", chantier: "Bordeaux Centre", date: "02/05/2025", entrée: "08:00", sortie: "17:00", total: "9h" },
+      { employé: "Marie Martin", chantier: "Mérignac", date: "02/05/2025", entrée: "07:30", sortie: "16:30", total: "9h" },
+      { employé: "Pierre Durand", chantier: "Paris", date: "02/05/2025", entrée: "08:30", sortie: "18:00", total: "9.5h" },
+      { employé: "Jean Dupont", chantier: "Bordeaux Centre", date: "01/05/2025", entrée: "08:15", sortie: "16:45", total: "8.5h" },
+      { employé: "Sophie Lefebvre", chantier: "Lyon", date: "01/05/2025", entrée: "07:45", sortie: "17:15", total: "9.5h" },
+    ];
+
+    // Filtrer par chantier si nécessaire
+    let filteredData = detailedData;
+    if (selectedChantiers.length > 0) {
+      const chantierNames = mockChantiers
+        .filter(c => selectedChantiers.includes(c.id))
+        .map(c => c.nom);
+      
+      filteredData = filteredData.filter(item => chantierNames.includes(item.chantier));
+    }
+
+    // Filtrer par employé si nécessaire
+    if (selectedEmployes.length > 0) {
+      const employeNames = mockEmployes
+        .filter(e => selectedEmployes.includes(e.id))
+        .map(e => e.nom);
+      
+      filteredData = filteredData.filter(item => employeNames.includes(item.employé));
+    }
+
+    return filteredData;
+  };
+
+  const handleExport = async () => {
+    try {
+      setExportInProgress(true);
+      toast.info(`Préparation de l'export en ${exportFormat.toUpperCase()}...`);
+      
+      // Générer les données à exporter
+      const dataToExport = generateExportData();
+      
+      // Formatter le nom du fichier avec la date
+      const formattedDateRange = `${format(dateRange.from, "yyyyMMdd")}_${format(dateRange.to, "yyyyMMdd")}`;
+      const fileName = `pointage_${formattedDateRange}`;
+      
+      // Exporter les données
+      const success = await exportData(dataToExport, exportFormat, {
+        fileName,
+        includeHeaders: true,
+        dateFormat: "dd/MM/yyyy"
+      });
+      
+      if (success) {
+        toast.success(`Exportation en ${exportFormat.toUpperCase()} réussie`);
+      } else {
+        toast.error(`Erreur lors de l'exportation en ${exportFormat.toUpperCase()}`);
+      }
+    } catch (error) {
+      console.error("Erreur d'export:", error);
+      toast.error("Une erreur est survenue lors de l'export");
+    } finally {
+      setExportInProgress(false);
+    }
   };
 
   const handlePrintReport = () => {
@@ -139,6 +199,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
               variant="default" 
               size="sm"
               onClick={handleExport}
+              disabled={exportInProgress}
             >
               <FileText className="h-4 w-4 mr-1" />
               Exporter
@@ -493,15 +554,30 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
                     <Label>Format d'export</Label>
                     <Select
                       value={exportFormat}
-                      onValueChange={setExportFormat}
+                      onValueChange={(value) => setExportFormat(value as ExportFormat)}
                     >
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Choisir un format" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="excel">Excel (.xlsx)</SelectItem>
-                        <SelectItem value="csv">CSV</SelectItem>
-                        <SelectItem value="pdf">PDF</SelectItem>
+                        <SelectItem value="excel">
+                          <div className="flex items-center gap-2">
+                            <FileExcel className="h-4 w-4" />
+                            <span>Excel (.xlsx)</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="csv">
+                          <div className="flex items-center gap-2">
+                            <FileCsv className="h-4 w-4" />
+                            <span>CSV</span>
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="pdf">
+                          <div className="flex items-center gap-2">
+                            <FilePdf className="h-4 w-4" />
+                            <span>PDF</span>
+                          </div>
+                        </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -545,8 +621,11 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
               </CardContent>
               <CardFooter className="flex justify-between">
                 <Button variant="outline" onClick={handlePrintReport}>Imprimer</Button>
-                <Button onClick={handleExport}>
-                  <FileText className="h-4 w-4 mr-1" />
+                <Button 
+                  onClick={handleExport}
+                  disabled={exportInProgress}
+                >
+                  <Download className="h-4 w-4 mr-1" />
                   Exporter les données
                 </Button>
               </CardFooter>
