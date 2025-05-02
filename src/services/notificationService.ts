@@ -13,13 +13,14 @@ export const requestNotificationPermission = async (): Promise<boolean> => {
     return true;
   }
   
-  // Correction: Compare with "default" instead of checking inequality with "denied"
+  // Check if permission is "default" (not decided yet)
   if (Notification.permission === "default") {
     const permission = await Notification.requestPermission();
     return permission === "granted";
   }
   
-  return Notification.permission === "granted";
+  // If we get here, permission is "denied"
+  return false;
 };
 
 // Envoyer une notification
