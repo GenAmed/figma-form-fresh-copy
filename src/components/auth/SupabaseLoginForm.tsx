@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -20,8 +20,9 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const SupabaseLoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn } = useSupabaseAuth();
+  const { signIn, user, loading } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   
   const {
     register,
@@ -35,6 +36,15 @@ export const SupabaseLoginForm: React.FC = () => {
     },
   });
 
+  // Redirection quand l'utilisateur est connecté ET qu'on a demandé la redirection
+  useEffect(() => {
+    if (user && shouldRedirect && !loading) {
+      console.log("🔄 Redirection vers /home après connexion confirmée");
+      setShouldRedirect(false);
+      navigate("/home", { replace: true });
+    }
+  }, [user, shouldRedirect, loading, navigate]);
+
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
@@ -44,9 +54,9 @@ export const SupabaseLoginForm: React.FC = () => {
       
       showSuccessToast("Connexion réussie", "Bienvenue !");
       
-      // Redirection immédiate après connexion réussie
-      console.log("🔄 Redirection vers /home après connexion réussie");
-      navigate("/home", { replace: true });
+      // Déclencher la redirection une fois que l'état sera mis à jour
+      console.log("✅ Connexion réussie, attente de la mise à jour de l'état");
+      setShouldRedirect(true);
       
     } catch (error: any) {
       console.error("❌ Erreur de connexion:", error);
