@@ -1,29 +1,41 @@
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { HomeWorker } from "@/components/home/HomeWorker";
 import { HomeAdmin } from "@/components/home/HomeAdmin";
-import { getCurrentUser, User } from "@/lib/auth";
+import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 import { Navigate } from "react-router-dom";
 
 const Home: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
-  }, []);
+  const { profile, loading, user } = useSupabaseProfile();
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+    return (
+      <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return <Navigate to="/" />;
   }
 
-  return user.role === "admin" ? <HomeAdmin user={user} /> : <HomeWorker user={user} />;
+  // Convertir le profil Supabase vers le format User attendu par les composants
+  const userForComponents = {
+    id: profile.id,
+    email: profile.email,
+    name: profile.name,
+    role: profile.role,
+    avatarUrl: profile.avatar_url || "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+    phone: profile.phone
+  };
+
+  return profile.role === "admin" ? 
+    <HomeAdmin user={userForComponents} /> : 
+    <HomeWorker user={userForComponents} />;
 };
 
 export default Home;
