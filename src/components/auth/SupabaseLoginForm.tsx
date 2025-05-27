@@ -22,6 +22,7 @@ export const SupabaseLoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { signIn, user, loading } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   
   const {
     register,
@@ -37,37 +38,41 @@ export const SupabaseLoginForm: React.FC = () => {
 
   // Redirection automatique si l'utilisateur est déjà connecté
   useEffect(() => {
-    console.log("🔍 [useEffect] user:", !!user, "loading:", loading, "isSubmitting:", isSubmitting);
+    console.log("🔍 [useEffect REDIRECT] user:", !!user, "loading:", loading, "isSubmitting:", isSubmitting, "shouldRedirect:", shouldRedirect);
+    
     if (user && !loading && !isSubmitting) {
-      console.log("🔄 [useEffect] Utilisateur déjà connecté, redirection vers /home");
+      console.log("🔄 [useEffect REDIRECT] Conditions remplies, redirection vers /home");
       navigate("/home", { replace: true });
+    } else if (shouldRedirect && user && !loading) {
+      console.log("🔄 [useEffect REDIRECT] shouldRedirect=true, redirection vers /home");
+      navigate("/home", { replace: true });
+      setShouldRedirect(false);
+    } else {
+      console.log("🚫 [useEffect REDIRECT] Conditions non remplies pour la redirection");
     }
-  }, [user, loading, isSubmitting, navigate]);
+  }, [user, loading, isSubmitting, shouldRedirect, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("🔐 [onSubmit] Début - Tentative de connexion avec:", data.email);
+      console.log("🔐 [onSubmit START] Début - Tentative de connexion avec:", data.email);
       
       const result = await signIn(data.email, data.password);
-      console.log("📊 [onSubmit] Résultat signIn:", !!result.user, result.user?.email);
+      console.log("📊 [onSubmit RESULT] Résultat signIn:", !!result.user, result.user?.email);
       
       if (result.user) {
-        console.log("✅ [onSubmit] Utilisateur connecté avec succès");
+        console.log("✅ [onSubmit SUCCESS] Utilisateur connecté avec succès");
         showSuccessToast("Connexion réussie", "Bienvenue !");
         
-        console.log("🔄 [onSubmit] Programmation de la redirection dans 500ms");
-        // Redirection différée pour laisser le temps à l'état de se mettre à jour
-        setTimeout(() => {
-          console.log("🚀 [setTimeout] Exécution de la redirection vers /home");
-          navigate("/home", { replace: true });
-        }, 500);
+        // Marquer qu'on devrait rediriger après la mise à jour de l'état
+        console.log("🔄 [onSubmit] Setting shouldRedirect to true");
+        setShouldRedirect(true);
       } else {
-        console.log("❌ [onSubmit] Pas d'utilisateur dans le résultat");
+        console.log("❌ [onSubmit ERROR] Pas d'utilisateur dans le résultat");
       }
       
     } catch (error: any) {
-      console.error("❌ [onSubmit] Erreur de connexion:", error);
+      console.error("❌ [onSubmit CATCH] Erreur de connexion:", error);
       
       let errorMessage = "Une erreur s'est produite";
       
@@ -83,7 +88,7 @@ export const SupabaseLoginForm: React.FC = () => {
       
       showErrorToast("Échec de connexion", errorMessage);
     } finally {
-      console.log("🏁 [onSubmit] Fin - setIsSubmitting(false)");
+      console.log("🏁 [onSubmit FINALLY] setIsSubmitting(false)");
       setIsSubmitting(false);
     }
   };
