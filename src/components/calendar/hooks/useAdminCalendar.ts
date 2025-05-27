@@ -4,6 +4,7 @@ import { addMonths, subMonths, startOfWeek, endOfWeek, eachDayOfInterval, isSame
 import { showToast } from "@/services/notifications/toastService";
 import { Assignment, Worker } from "../types";
 import { checkUnassignedWorkers } from "@/services/assignment/assignmentCheckService";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useAdminCalendar = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -12,74 +13,76 @@ export const useAdminCalendar = () => {
   const [activeTab, setActiveTab] = useState<"daily" | "weekly">("daily");
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [workerStats, setWorkerStats] = useState<Worker[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Load assignments from database
+  const loadAssignments = async () => {
+    setLoading(true);
+    try {
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('assignments')
+        .select(`
+          id,
+          start_date,
+          end_date,
+          user_id,
+          worksite_id,
+          profiles!inner(name),
+          worksites!inner(name)
+        `);
+
+      if (assignmentsError) {
+        console.error('Erreur lors du chargement des assignations:', assignmentsError);
+        showToast("Erreur", "Impossible de charger les assignations", "error");
+        return;
+      }
+
+      // Transform assignments data to match the expected format
+      const transformedAssignments: Assignment[] = (assignmentsData || []).map(assignment => ({
+        id: assignment.id,
+        worker: assignment.profiles.name,
+        site: assignment.worksites.name,
+        status: "confirmed" as const,
+        date: new Date(assignment.start_date)
+      }));
+
+      setAssignments(transformedAssignments);
+
+      // Generate worker stats from assignments
+      const workerStatsMap = new Map<string, { name: string; assignedDays: number }>();
+      
+      transformedAssignments.forEach(assignment => {
+        const existing = workerStatsMap.get(assignment.worker);
+        if (existing) {
+          existing.assignedDays += 1;
+        } else {
+          workerStatsMap.set(assignment.worker, {
+            name: assignment.worker,
+            assignedDays: 1
+          });
+        }
+      });
+
+      const stats: Worker[] = Array.from(workerStatsMap.entries()).map(([name, data], index) => ({
+        id: (index + 1).toString(),
+        name: data.name,
+        assignedDays: data.assignedDays
+      }));
+
+      setWorkerStats(stats);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des assignations:', error);
+      showToast("Erreur", "Impossible de charger les assignations", "error");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Load data on startup
   useEffect(() => {
-    // In a real implementation, this data would come from an API
-    const fakeAssignments: Assignment[] = [
-      {
-        id: "1",
-        worker: "Jean Dupont",
-        site: "Chantier Tour Eiffel",
-        status: "confirmed",
-        date: new Date(2025, 4, 2) // 2 mai 2025
-      },
-      {
-        id: "2",
-        worker: "Marie Martin",
-        site: "Chantier Arc de Triomphe",
-        status: "pending",
-        date: new Date(2025, 4, 5) // 5 mai 2025
-      },
-      {
-        id: "3",
-        worker: "Philippe Legrand",
-        site: "Chantier Louvre",
-        status: "confirmed",
-        date: new Date(2025, 4, 5) // 5 mai 2025
-      },
-      {
-        id: "4",
-        worker: "Sophie Petit",
-        site: "Chantier Notre Dame",
-        status: "confirmed",
-        date: new Date(2025, 4, 8) // 8 mai 2025
-      },
-      {
-        id: "5",
-        worker: "Jean Dupont",
-        site: "Chantier Tour Eiffel",
-        status: "confirmed",
-        date: new Date(2025, 4, 12) // 12 mai 2025
-      },
-      {
-        id: "6",
-        worker: "Marie Martin",
-        site: "Chantier Montmartre",
-        status: "pending",
-        date: new Date(2025, 4, 15) // 15 mai 2025
-      },
-      {
-        id: "7",
-        worker: "Philippe Legrand",
-        site: "Chantier Bastille",
-        status: "confirmed",
-        date: new Date(2025, 4, 18) // 18 mai 2025
-      }
-    ];
+    loadAssignments();
     
-    setAssignments(fakeAssignments);
-
-    // Create statistics for workers
-    const fakeWorkerStats: Worker[] = [
-      { id: "1", name: "Jean Dupont", assignedDays: 15 },
-      { id: "2", name: "Marie Martin", assignedDays: 12 },
-      { id: "3", name: "Philippe Legrand", assignedDays: 18 },
-      { id: "4", name: "Sophie Petit", assignedDays: 9 }
-    ];
-    
-    setWorkerStats(fakeWorkerStats);
-
     const unassignedList = checkUnassignedWorkers();
     setUnassignedWorkers(unassignedList);
     
@@ -105,7 +108,6 @@ export const useAdminCalendar = () => {
 
   // Handle "Add Assignment" button click
   const handleAddAssignment = () => {
-    // In a real app, this would open a modal or navigate to an assignment form
     showToast(
       "Ajouter une assignation", 
       "Cette fonctionnalité sera bientôt disponible",
@@ -139,6 +141,7 @@ export const useAdminCalendar = () => {
     handleNextMonth,
     handleAddAssignment,
     selectedDateAssignments,
-    weekDays
+    weekDays,
+    loading
   };
 };

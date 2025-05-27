@@ -2,54 +2,57 @@
 import { useState, useEffect } from "react";
 import { addMonths, subMonths, isSameDay } from "date-fns";
 import { Assignment } from "../types";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/auth";
 
 export const useWorkerCalendar = () => {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [loading, setLoading] = useState(false);
   
-  // Load assignments (example with fake data)
-  useEffect(() => {
-    // In a real app, this data would come from an API
-    const fakeAssignments: Assignment[] = [
-      {
-        id: "1",
-        worker: "Thomas",
-        site: "Chantier Bordeaux Centre",
-        status: "confirmed",
-        date: new Date(2025, 4, 2) // 2 mai 2025
-      },
-      {
-        id: "2",
-        worker: "Thomas",
-        site: "Chantier Mérignac",
-        status: "pending",
-        date: new Date(2025, 4, 5) // 5 mai 2025
-      },
-      {
-        id: "3",
-        worker: "Thomas",
-        site: "Chantier Pessac",
-        status: "confirmed",
-        date: new Date(2025, 4, 7) // 7 mai 2025
-      },
-      {
-        id: "4", 
-        worker: "Thomas",
-        site: "Chantier Lormont",
-        status: "confirmed",
-        date: new Date(2025, 4, 12) // 12 mai 2025
-      },
-      {
-        id: "5",
-        worker: "Thomas",
-        site: "Chantier Bordeaux Centre",
-        status: "confirmed",
-        date: new Date(2025, 4, 15) // 15 mai 2025
+  // Load assignments for the current user
+  const loadUserAssignments = async () => {
+    const user = getCurrentUser();
+    if (!user) return;
+
+    setLoading(true);
+    try {
+      const { data: assignmentsData, error: assignmentsError } = await supabase
+        .from('assignments')
+        .select(`
+          id,
+          start_date,
+          end_date,
+          worksites!inner(name)
+        `)
+        .eq('user_id', user.id);
+
+      if (assignmentsError) {
+        console.error('Erreur lors du chargement des assignations:', assignmentsError);
+        return;
       }
-    ];
-    
-    setAssignments(fakeAssignments);
+
+      // Transform assignments data to match the expected format
+      const transformedAssignments: Assignment[] = (assignmentsData || []).map(assignment => ({
+        id: assignment.id,
+        worker: user.name,
+        site: assignment.worksites.name,
+        status: "confirmed" as const,
+        date: new Date(assignment.start_date)
+      }));
+
+      setAssignments(transformedAssignments);
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des assignations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUserAssignments();
   }, []);
 
   const handlePreviousMonth = () => {
@@ -78,6 +81,7 @@ export const useWorkerCalendar = () => {
     handlePreviousMonth,
     handleNextMonth,
     selectedDateAssignments,
-    getAssignmentDates
+    getAssignmentDates,
+    loading
   };
 };

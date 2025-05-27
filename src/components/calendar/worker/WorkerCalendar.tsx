@@ -21,8 +21,20 @@ export const WorkerCalendar: React.FC<WorkerCalendarProps> = ({ user }) => {
     handlePreviousMonth,
     handleNextMonth,
     selectedDateAssignments,
-    getAssignmentDates
+    getAssignmentDates,
+    loading
   } = useWorkerCalendar();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F8F8F8] flex flex-col items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#BD1E28] mx-auto mb-4"></div>
+          <p className="text-gray-600">Chargement de vos assignations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] flex flex-col">
