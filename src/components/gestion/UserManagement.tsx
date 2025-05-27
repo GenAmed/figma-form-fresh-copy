@@ -28,38 +28,41 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
 
   // Charger les utilisateurs depuis Supabase
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        setLoading(true);
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*");
-
-        if (error) {
-          throw error;
-        }
-
-        if (data) {
-          const formattedData: UserData[] = data.map(profile => ({
-            id: profile.id,
-            name: profile.name,
-            email: profile.email,
-            role: profile.role as "ouvrier" | "admin",
-            avatarUrl: profile.avatar_url || "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg", // Image par défaut si aucune n'est fournie
-            phone: profile.phone
-          }));
-          setUsers(formattedData);
-        }
-      } catch (error) {
-        console.error("Erreur lors du chargement des utilisateurs:", error);
-        toast.error("Erreur lors du chargement des utilisateurs");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      console.log("Chargement des utilisateurs depuis Supabase");
+      
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*");
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        const formattedData: UserData[] = data.map(profile => ({
+          id: profile.id,
+          name: profile.name,
+          email: profile.email,
+          role: profile.role as "ouvrier" | "admin",
+          avatarUrl: profile.avatar_url || "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+          phone: profile.phone
+        }));
+        setUsers(formattedData);
+        console.log(`${formattedData.length} utilisateurs chargés`);
+      }
+    } catch (error) {
+      console.error("Erreur lors du chargement des utilisateurs:", error);
+      toast.error("Erreur lors du chargement des utilisateurs");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -86,20 +89,26 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
     
     if (confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) {
       try {
+        console.log("Tentative de suppression de l'utilisateur:", id);
+        
         const { error } = await supabase
           .from("profiles")
           .delete()
           .eq("id", id);
 
         if (error) {
+          console.error("Erreur lors de la suppression:", error);
           throw error;
         }
 
+        console.log("Utilisateur supprimé avec succès");
         toast.success("Utilisateur supprimé avec succès");
-        setUsers(users.filter(user => user.id !== id));
+        
+        // Recharger la liste pour assurer la cohérence
+        await fetchUsers();
       } catch (error) {
         console.error("Erreur lors de la suppression de l'utilisateur:", error);
-        toast.error("Erreur lors de la suppression de l'utilisateur");
+        toast.error(`Erreur lors de la suppression de l'utilisateur: ${error.message}`);
       }
     }
   };
@@ -149,7 +158,6 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
                       alt="User" 
                       className="w-12 h-12 rounded-full"
                       onError={(e) => {
-                        // Fallback en cas d'image non disponible
                         (e.target as HTMLImageElement).src = "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg";
                       }}
                     />

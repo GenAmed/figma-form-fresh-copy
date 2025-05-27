@@ -92,23 +92,26 @@ export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) 
     
     if (confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) {
       try {
-        // Utiliser l'Edge Function pour la suppression aussi pour maintenir la cohérence
+        console.log("Tentative de suppression du chantier:", id);
+        
         const { error } = await supabase
           .from("worksites")
           .delete()
           .eq("id", id);
 
         if (error) {
+          console.error("Erreur lors de la suppression:", error);
           throw error;
         }
 
+        console.log("Chantier supprimé avec succès");
         toast.success("Chantier supprimé avec succès");
         
         // Recharger la liste complète pour assurer la cohérence
         await fetchWorksites();
       } catch (error) {
         console.error("Erreur lors de la suppression du chantier:", error);
-        toast.error("Erreur lors de la suppression du chantier");
+        toast.error(`Erreur lors de la suppression du chantier: ${error.message}`);
       }
     }
   };
