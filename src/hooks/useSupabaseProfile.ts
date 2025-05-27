@@ -27,9 +27,13 @@ export const useSupabaseProfile = () => {
         if (mounted) {
           setProfile(null);
           setError(null);
+          setProfileLoading(false);
         }
         return;
       }
+
+      // Éviter les appels multiples
+      if (profileLoading) return;
 
       setProfileLoading(true);
       setError(null);
@@ -79,14 +83,14 @@ export const useSupabaseProfile = () => {
     };
 
     // Ne récupérer le profil que si l'auth n'est pas en cours de chargement et qu'il y a un utilisateur
-    if (!authLoading) {
+    if (!authLoading && user && !profile) {
       fetchProfile();
     }
 
     return () => {
       mounted = false;
     };
-  }, [user, authLoading]);
+  }, [user, authLoading]); // Retiré profile des dépendances pour éviter les boucles
 
   return {
     profile,

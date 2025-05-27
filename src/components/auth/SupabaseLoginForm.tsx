@@ -20,7 +20,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const SupabaseLoginForm: React.FC = () => {
   const navigate = useNavigate();
-  const { signIn, user } = useSupabaseAuth();
+  const { signIn } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const {
@@ -35,14 +35,6 @@ export const SupabaseLoginForm: React.FC = () => {
     },
   });
 
-  // Redirection automatique quand l'utilisateur est connecté
-  React.useEffect(() => {
-    if (user && !isSubmitting) {
-      console.log("🔄 Utilisateur connecté, redirection vers /home");
-      navigate("/home", { replace: true });
-    }
-  }, [user, navigate, isSubmitting]);
-
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
@@ -52,7 +44,10 @@ export const SupabaseLoginForm: React.FC = () => {
       
       showSuccessToast("Connexion réussie", "Bienvenue !");
       
-      // La redirection se fera automatiquement via useEffect
+      // Redirection immédiate après connexion réussie
+      console.log("🔄 Redirection vers /home après connexion réussie");
+      navigate("/home", { replace: true });
+      
     } catch (error: any) {
       console.error("❌ Erreur de connexion:", error);
       
