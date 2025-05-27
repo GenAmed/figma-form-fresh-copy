@@ -78,38 +78,6 @@ export const useRecentAlerts = () => {
           }
         });
 
-        // Vérifier les ouvriers non assignés pour la semaine prochaine
-        const nextWeekStart = new Date();
-        nextWeekStart.setDate(nextWeekStart.getDate() + 7);
-        nextWeekStart.setDate(nextWeekStart.getDate() - nextWeekStart.getDay() + 1);
-        
-        const { data: assignments, error: assignmentsError } = await supabase
-          .from('assignments')
-          .select('user_id')
-          .gte('start_date', nextWeekStart.toISOString().split('T')[0])
-          .lte('start_date', new Date(nextWeekStart.getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]);
-
-        const { data: activeWorkers, error: workersError } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('active', true)
-          .eq('role', 'ouvrier');
-
-        if (!assignmentsError && !workersError && activeWorkers && assignments) {
-          const assignedWorkerIds = new Set(assignments.map(a => a.user_id));
-          const unassignedCount = activeWorkers.filter(w => !assignedWorkerIds.has(w.id)).length;
-          
-          if (unassignedCount > 0) {
-            recentAlerts.push({
-              id: `unassigned-${alertId++}`,
-              type: "warning",
-              title: "Ouvriers non assignés",
-              description: `${unassignedCount} ouvrier(s) sans assignation semaine prochaine`,
-              severity: "medium"
-            });
-          }
-        }
-
         // Prendre seulement les 3 alertes les plus importantes
         setAlerts(recentAlerts.slice(0, 3));
 
