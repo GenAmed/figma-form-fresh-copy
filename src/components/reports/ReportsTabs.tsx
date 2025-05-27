@@ -8,6 +8,12 @@ import { ReportData } from "@/hooks/useReportsData";
 import { Alert } from "@/hooks/useAlertsData";
 import { ExportFormat } from "@/services/export/types";
 
+interface SavedReport {
+  id: string;
+  name: string;
+  filters: any;
+}
+
 interface ReportsTabsProps {
   data: ReportData;
   loading: boolean;
@@ -24,7 +30,7 @@ interface ReportsTabsProps {
   handlePrintReport: () => void;
   customReportName: string;
   setCustomReportName: (name: string) => void;
-  savedReports: string[];
+  savedReports: SavedReport[];
   handleSaveReport: () => void;
   handleDeleteReport: (name: string) => void;
 }
