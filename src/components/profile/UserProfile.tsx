@@ -10,6 +10,8 @@ import { clearCurrentUser } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { ChangePasswordDialog } from "./ChangePasswordDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useHomeStats } from "@/hooks/useHomeStats";
 
 interface UserProfileProps {
   user: User;
@@ -18,20 +20,37 @@ interface UserProfileProps {
 export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
   const navigate = useNavigate();
   const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const { stats } = useHomeStats();
 
-  const handleLogout = () => {
-    clearCurrentUser();
-    toast.success("Déconnexion réussie", {
-      description: "À bientôt !",
-      duration: 2000,
-    });
-    setTimeout(() => {
-      navigate("/");
-    }, 1000);
+  const handleLogout = async () => {
+    try {
+      // Déconnecter de Supabase si l'utilisateur est connecté via Supabase
+      await supabase.auth.signOut();
+      
+      // Nettoyer le localStorage
+      clearCurrentUser();
+      
+      toast.success("Déconnexion réussie", {
+        description: "À bientôt !",
+        duration: 2000,
+      });
+      
+      setTimeout(() => {
+        navigate("/");
+      }, 1000);
+    } catch (error) {
+      console.error("Erreur lors de la déconnexion:", error);
+      toast.error("Erreur lors de la déconnexion");
+    }
   };
 
   const handleChangePassword = () => {
     setShowChangePassword(true);
+  };
+
+  const handleSettings = () => {
+    setShowSettings(true);
   };
 
   return (
@@ -40,7 +59,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
       <header className="bg-white shadow-sm px-4 py-3 fixed w-full top-0 z-50">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold">Mon Profil</h1>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" onClick={handleSettings}>
             <Settings className="h-4 w-4" />
           </Button>
         </div>
@@ -70,11 +89,11 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Téléphone</label>
-                  <p>{"Non défini"}</p>
+                  <p>{user.phone || "Non défini"}</p>
                 </div>
                 <div>
                   <label className="text-sm text-gray-500">Dernière connexion</label>
-                  <p>Aujourd'hui à 08:15</p>
+                  <p>{user.lastLogin ? new Date(user.lastLogin).toLocaleDateString('fr-FR') : "Non disponible"}</p>
                 </div>
               </div>
             </CardContent>
@@ -88,12 +107,12 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-lg text-center">
-                  <p className="text-sm text-gray-500">Heures ce mois</p>
-                  <p className="text-xl font-bold">124h</p>
+                  <p className="text-sm text-gray-500">Employés Actifs</p>
+                  <p className="text-xl font-bold">{stats.employesActifs}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg text-center">
                   <p className="text-sm text-gray-500">Chantiers</p>
-                  <p className="text-xl font-bold">3</p>
+                  <p className="text-xl font-bold">{stats.chantiersActifs}</p>
                 </div>
                 <div className="bg-gray-50 p-4 rounded-lg text-center">
                   <p className="text-sm text-gray-500">Ponctualité</p>
@@ -155,6 +174,39 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
 
       {/* Bottom Navigation */}
       <BottomNavigation activeTab="home" />
+
+      {/* Settings Dialog */}
+      <Dialog open={showSettings} onOpenChange={setShowSettings}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Paramètres du compte</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-medium mb-2">Informations personnelles</h3>
+              <p className="text-sm text-gray-600">Nom: {user.name}</p>
+              <p className="text-sm text-gray-600">Email: {user.email}</p>
+              <p className="text-sm text-gray-600">Rôle: {user.role === "admin" ? "Administrateur" : "Ouvrier"}</p>
+            </div>
+            <div className="flex space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={handleChangePassword}
+                className="flex-1"
+              >
+                Changer le mot de passe
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setShowSettings(false)}
+                className="flex-1"
+              >
+                Fermer
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Change Password Dialog */}
       <ChangePasswordDialog 

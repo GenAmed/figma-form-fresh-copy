@@ -4,13 +4,23 @@ import { Bell, MessageCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { getAllMessages, InternalMessage } from "@/services/internalMessageService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
+interface InternalMessage {
+  id: string;
+  sender_name: string;
+  subject: string;
+  content: string;
+  priority: 'normal' | 'urgent';
+  status: 'new' | 'read';
+  created_at: string;
+}
 
 export const MessageNotifications: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [recentMessages, setRecentMessages] = useState<InternalMessage[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadUnreadMessages();
@@ -19,12 +29,27 @@ export const MessageNotifications: React.FC = () => {
 
   const loadUnreadMessages = async () => {
     try {
-      const messages = await getAllMessages();
-      const unread = messages.filter(msg => msg.status === "new");
+      setLoading(true);
+      
+      const { data: messages, error } = await supabase
+        .from('internal_messages')
+        .select('*')
+        .eq('status', 'new')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error("Erreur lors du chargement des messages:", error);
+        return;
+      }
+
+      const unread = messages || [];
       setUnreadCount(unread.length);
-      setRecentMessages(unread.slice(0, 5)); // Afficher les 5 plus récents
+      setRecentMessages(unread);
     } catch (error) {
       console.error("Erreur lors du chargement des messages non lus:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -60,6 +85,18 @@ export const MessageNotifications: React.FC = () => {
     };
   };
 
+  const handleViewAllMessages = () => {
+    window.location.hash = "#/gestion/messages";
+  };
+
+  if (loading) {
+    return (
+      <Button variant="ghost" size="sm" className="relative" disabled>
+        <Bell className="h-5 w-5" />
+      </Button>
+    );
+  }
+
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -70,7 +107,7 @@ export const MessageNotifications: React.FC = () => {
               variant="destructive" 
               className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs"
             >
-              {unreadCount}
+              {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
         </Button>
@@ -87,16 +124,21 @@ export const MessageNotifications: React.FC = () => {
               Aucun nouveau message
             </p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 max-h-64 overflow-y-auto">
               {recentMessages.map((message) => (
-                <div key={message.id} className="p-2 bg-gray-50 rounded-md">
+                <div key={message.id} className="p-2 bg-gray-50 rounded-md hover:bg-gray-100 transition-colors">
                   <div className="flex items-start space-x-2">
-                    <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5" />
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{message.sender_name}</p>
+                    <MessageCircle className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{message.sender_name}</p>
                       <p className="text-xs text-gray-600 truncate">{message.subject}</p>
                       <p className="text-xs text-gray-500">
-                        {new Date(message.created_at).toLocaleDateString('fr-FR')}
+                        {new Date(message.created_at).toLocaleDateString('fr-FR', {
+                          day: 'numeric',
+                          month: 'short',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
                       </p>
                     </div>
                     {message.priority === 'urgent' && (
@@ -115,9 +157,9 @@ export const MessageNotifications: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="w-full"
-              onClick={() => window.location.hash = "#/gestion/messages"}
+              onClick={handleViewAllMessages}
             >
-              Voir tous les messages
+              Voir tous les messages ({unreadCount})
             </Button>
           )}
         </div>
