@@ -8,7 +8,6 @@ import { toast } from "sonner";
 import { useHomeStats } from "@/hooks/useHomeStats";
 import { useRecentAlerts } from "@/hooks/useRecentAlerts";
 import { useRecentActivity } from "@/hooks/useRecentActivity";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 import { AdminHeader } from "./admin/AdminHeader";
 import { QuickStats } from "./admin/QuickStats";
 import { AdminActions } from "./admin/AdminActions";
@@ -16,7 +15,18 @@ import { RecentAlerts } from "./admin/RecentAlerts";
 import { RecentActivity } from "./admin/RecentActivity";
 import { ConnectionStatus } from "./admin/ConnectionStatus";
 
-export const HomeAdmin: React.FC = () => {
+interface HomeAdminProps {
+  profile?: {
+    id: string;
+    name: string;
+    email: string;
+    role: "admin" | "ouvrier";
+    avatar_url?: string;
+    phone?: string;
+  };
+}
+
+export const HomeAdmin: React.FC<HomeAdminProps> = ({ profile }) => {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState<boolean>(true);
   const [hasCheckedUnassigned, setHasCheckedUnassigned] = useState<boolean>(false);
@@ -25,7 +35,6 @@ export const HomeAdmin: React.FC = () => {
   const { stats, loading: statsLoading } = useHomeStats();
   const { alerts, loading: alertsLoading } = useRecentAlerts();
   const { activities, loading: activitiesLoading } = useRecentActivity();
-  const { profile, user } = useSupabaseProfile();
 
   // Vérifier la connexion à Supabase
   useEffect(() => {
@@ -59,7 +68,7 @@ export const HomeAdmin: React.FC = () => {
   }, [profile, hasCheckedUnassigned]);
 
   // Early returns AFTER all hooks have been called
-  if (!profile || !user) {
+  if (!profile) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
         <div className="text-center">

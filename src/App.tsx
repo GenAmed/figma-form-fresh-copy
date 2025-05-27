@@ -3,7 +3,7 @@ import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { HashRouter, Routes, Route } from "react-router-dom";
-import { AuthGuard } from "@/components/auth/AuthGuard";
+import { SupabaseAuthGuard } from "@/components/auth/SupabaseAuthGuard";
 import Index from "./pages/Index";
 import Home from "./pages/Home";
 import Pointage from "./pages/Pointage";
@@ -24,53 +24,53 @@ const App = () => (
         <Routes>
           {/* Route publique - Page de connexion */}
           <Route path="/" element={
-            <AuthGuard requireAuth={false}>
+            <SupabaseAuthGuard requireAuth={false}>
               <Index />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           {/* Routes protégées - Authentification requise */}
           <Route path="/home" element={
-            <AuthGuard>
+            <SupabaseAuthGuard>
               <Home />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           <Route path="/pointage" element={
-            <AuthGuard>
+            <SupabaseAuthGuard>
               <Pointage />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           <Route path="/calendrier" element={
-            <AuthGuard>
+            <SupabaseAuthGuard>
               <Calendar />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           <Route path="/suivi-hebdo" element={
-            <AuthGuard>
+            <SupabaseAuthGuard>
               <WeeklySummary />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           <Route path="/profil" element={
-            <AuthGuard>
+            <SupabaseAuthGuard>
               <Profile />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           <Route path="/rapports" element={
-            <AuthGuard>
+            <SupabaseAuthGuard>
               <Reports />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           {/* Routes admin uniquement */}
           <Route path="/gestion/*" element={
-            <AuthGuard requireRole="admin">
+            <SupabaseAuthGuard requireRole="admin">
               <Gestion />
-            </AuthGuard>
+            </SupabaseAuthGuard>
           } />
           
           {/* Route 404 */}

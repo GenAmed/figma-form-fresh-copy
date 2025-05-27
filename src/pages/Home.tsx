@@ -50,14 +50,18 @@ const Home: React.FC = () => {
 
   console.log("✅ [Home] Rendu du composant pour:", profile.role);
 
-  return profile.role === "admin" ? <HomeAdmin /> : <HomeWorker user={{
+  const userForComponents = {
     id: profile.id,
     email: profile.email,
     name: profile.name,
     role: profile.role,
     avatarUrl: profile.avatar_url || "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
     phone: profile.phone
-  }} />;
+  };
+
+  return profile.role === "admin" ? 
+    <HomeAdmin profile={profile} /> : 
+    <HomeWorker user={userForComponents} />;
 };
 
 export default Home;
