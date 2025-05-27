@@ -2,8 +2,9 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { showPointageFeedback } from "@/services/notifications/feedbackService";
-import { Clock, Loader, Play, Square } from "lucide-react";
+import { Clock, Loader, Play, Square, MessageSquare } from "lucide-react";
 import { hapticFeedback } from "@/services/hapticFeedback";
+import { CommentDialog } from "./CommentDialog";
 
 interface TrackingControlsProps {
   isTracking: boolean;
@@ -29,51 +30,104 @@ export const TrackingControls: React.FC<TrackingControlsProps> = ({
   onSyncRequest,
 }) => {
   // Fonction pour déclencher le retour haptique approprié
-  const handleButtonClick = (action: "start" | "end") => {
-    // Vibration du téléphone
-    if (action === "start") {
-      hapticFeedback.success();
-      onStartTracking();
-      showPointageFeedback("start", true);
-    } else {
-      hapticFeedback.warning();
-      onEndTracking();
-      showPointageFeedback("end", true);
-    }
+  const handleStartTracking = (comment?: string) => {
+    hapticFeedback.success();
+    onStartTracking(comment);
+    showPointageFeedback("start", true);
+  };
+
+  const handleEndTracking = (comment?: string) => {
+    hapticFeedback.warning();
+    onEndTracking(comment);
+    showPointageFeedback("end", true);
+  };
+
+  const handleQuickStart = () => {
+    handleStartTracking();
+  };
+
+  const handleQuickEnd = () => {
+    handleEndTracking();
   };
 
   return (
     <div className="flex flex-col items-center space-y-4 w-full">
       {isTracking ? (
-        <Button
-          variant="destructive"
-          size="lg"
-          className="w-full h-14 text-lg flex items-center justify-center gap-3 font-medium"
-          onClick={() => handleButtonClick("end")}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <Loader className="h-5 w-5 animate-spin" />
-          ) : (
-            <Square className="h-5 w-5" />
-          )}
-          Terminer le travail
-        </Button>
+        <div className="w-full space-y-3">
+          {/* Bouton principal de fin */}
+          <Button
+            variant="destructive"
+            size="lg"
+            className="w-full h-14 text-lg flex items-center justify-center gap-3 font-medium"
+            onClick={handleQuickEnd}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader className="h-5 w-5 animate-spin" />
+            ) : (
+              <Square className="h-5 w-5" />
+            )}
+            Terminer le travail
+          </Button>
+
+          {/* Bouton avec commentaire */}
+          <CommentDialog
+            trigger={
+              <Button
+                variant="outline"
+                className="w-full flex items-center gap-2"
+                disabled={isLoading}
+              >
+                <MessageSquare className="h-4 w-4" />
+                Terminer avec commentaire
+              </Button>
+            }
+            title="Terminer le travail"
+            description="Ajoutez un commentaire pour expliquer votre fin de journée (départ anticipé, problème, etc.)"
+            placeholder="Ex: Parti plus tôt pour rendez-vous médical, problème sur le chantier..."
+            onConfirm={handleEndTracking}
+            isLoading={isLoading}
+          />
+        </div>
       ) : (
-        <Button
-          variant="default"
-          size="lg"
-          className="w-full h-14 text-lg bg-green-600 hover:bg-green-700 flex items-center justify-center gap-3 font-medium"
-          onClick={() => handleButtonClick("start")}
-          disabled={isLoading || !hasSelectedWorksite}
-        >
-          {isLoading ? (
-            <Loader className="h-5 w-5 animate-spin" />
-          ) : (
-            <Play className="h-5 w-5" />
+        <div className="w-full space-y-3">
+          {/* Bouton principal de début */}
+          <Button
+            variant="default"
+            size="lg"
+            className="w-full h-14 text-lg bg-green-600 hover:bg-green-700 flex items-center justify-center gap-3 font-medium"
+            onClick={handleQuickStart}
+            disabled={isLoading || !hasSelectedWorksite}
+          >
+            {isLoading ? (
+              <Loader className="h-5 w-5 animate-spin" />
+            ) : (
+              <Play className="h-5 w-5" />
+            )}
+            Commencer le travail
+          </Button>
+
+          {/* Bouton avec commentaire */}
+          {hasSelectedWorksite && (
+            <CommentDialog
+              trigger={
+                <Button
+                  variant="outline"
+                  className="w-full flex items-center gap-2"
+                  disabled={isLoading}
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Commencer avec commentaire
+                </Button>
+              }
+              title="Commencer le travail"
+              description="Ajoutez un commentaire pour expliquer votre arrivée (retard, situation particulière, etc.)"
+              placeholder="Ex: Arrivé en retard à cause des transports, commencé plus tôt que prévu..."
+              onConfirm={handleStartTracking}
+              isLoading={isLoading}
+            />
           )}
-          Commencer le travail
-        </Button>
+        </div>
       )}
       
       <p className="text-sm text-gray-500 text-center">
