@@ -93,6 +93,69 @@ export type Database = {
         }
         Relationships: []
       }
+      time_entries: {
+        Row: {
+          breaks: Json | null
+          comment: string | null
+          created_at: string
+          date: string
+          end_coordinates: Json | null
+          end_time: string | null
+          id: string
+          start_coordinates: Json | null
+          start_time: string
+          status: string
+          updated_at: string
+          user_id: string
+          worksite_id: string
+        }
+        Insert: {
+          breaks?: Json | null
+          comment?: string | null
+          created_at?: string
+          date: string
+          end_coordinates?: Json | null
+          end_time?: string | null
+          id?: string
+          start_coordinates?: Json | null
+          start_time: string
+          status?: string
+          updated_at?: string
+          user_id: string
+          worksite_id: string
+        }
+        Update: {
+          breaks?: Json | null
+          comment?: string | null
+          created_at?: string
+          date?: string
+          end_coordinates?: Json | null
+          end_time?: string | null
+          id?: string
+          start_coordinates?: Json | null
+          start_time?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+          worksite_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_entries_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_entries_worksite_id_fkey"
+            columns: ["worksite_id"]
+            isOneToOne: false
+            referencedRelation: "worksites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       worksites: {
         Row: {
           address: string

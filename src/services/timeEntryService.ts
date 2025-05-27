@@ -34,8 +34,7 @@ export interface TimeEntry {
 
 export const createTimeEntry = async (entry: Omit<TimeEntry, 'id' | 'created_at' | 'updated_at'>): Promise<TimeEntry> => {
   try {
-    // Utiliser la méthode générique avec typage explicite
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('time_entries')
       .insert({
         user_id: entry.user_id,
@@ -64,7 +63,7 @@ export const createTimeEntry = async (entry: Omit<TimeEntry, 'id' | 'created_at'
 
 export const updateTimeEntry = async (id: string, updates: Partial<TimeEntry>): Promise<TimeEntry> => {
   try {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('time_entries')
       .update(updates)
       .eq('id', id)
@@ -85,7 +84,7 @@ export const updateTimeEntry = async (id: string, updates: Partial<TimeEntry>): 
 
 export const getActiveTimeEntry = async (userId: string, date: string): Promise<TimeEntry | null> => {
   try {
-    const { data, error } = await (supabase as any)
+    const { data, error } = await supabase
       .from('time_entries')
       .select('*')
       .eq('user_id', userId)
@@ -107,7 +106,7 @@ export const getActiveTimeEntry = async (userId: string, date: string): Promise<
 
 export const getUserTimeEntries = async (userId: string, startDate?: string, endDate?: string): Promise<TimeEntry[]> => {
   try {
-    let query = (supabase as any)
+    let query = supabase
       .from('time_entries')
       .select('*')
       .eq('user_id', userId)
