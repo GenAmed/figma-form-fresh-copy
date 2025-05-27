@@ -28,6 +28,10 @@ export const ReportIssueDialog: React.FC<ReportIssueDialogProps> = ({ children }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log("=== DÉBUT handleSubmit ===");
+    console.log("Données du formulaire:", formData);
+    console.log("Utilisateur:", user);
+    
     if (!formData.subject.trim() || !formData.description.trim()) {
       toast.error("Veuillez remplir tous les champs obligatoires");
       return;
@@ -41,18 +45,15 @@ export const ReportIssueDialog: React.FC<ReportIssueDialogProps> = ({ children }
     setLoading(true);
     
     try {
-      console.log("Envoi du signalement:", {
-        subject: formData.subject,
-        content: formData.description,
-        priority: formData.priority,
-        user: user
-      });
-
+      console.log("Appel à sendInternalMessage...");
+      
       const success = await sendInternalMessage(
         formData.subject,
         formData.description,
         formData.priority
       );
+
+      console.log("Résultat de sendInternalMessage:", success);
 
       if (success) {
         toast.success("Signalement envoyé", {
@@ -61,16 +62,20 @@ export const ReportIssueDialog: React.FC<ReportIssueDialogProps> = ({ children }
         
         setFormData({ subject: "", description: "", priority: "normal" });
         setOpen(false);
+        console.log("=== FIN handleSubmit (SUCCÈS) ===");
       } else {
+        console.log("Échec de l'envoi");
         toast.error("Erreur lors de l'envoi", {
           description: "Impossible d'envoyer le signalement. Veuillez réessayer."
         });
+        console.log("=== FIN handleSubmit (ÉCHEC) ===");
       }
     } catch (error) {
-      console.error("Erreur lors du signalement:", error);
+      console.error("Erreur dans handleSubmit:", error);
       toast.error("Erreur lors de l'envoi", {
         description: "Une erreur est survenue. Veuillez réessayer."
       });
+      console.log("=== FIN handleSubmit (ERREUR) ===");
     } finally {
       setLoading(false);
     }
