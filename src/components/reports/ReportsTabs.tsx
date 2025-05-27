@@ -1,37 +1,38 @@
 
 import React from "react";
-import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { DashboardTab } from "./dashboard/DashboardTab";
 import { AlertsTab } from "./alerts/AlertsTab";
-import { DetailedTab } from "./detailed/DetailedTab";
 import { ExportTab } from "./export/ExportTab";
-import { CustomReportsTab } from "./custom/CustomReportsTab";
-import { ExportFormat } from "@/services/export/types";
+import { ReportData } from "@/hooks/useReportsData";
+import { Alert } from "@/hooks/useAlertsData";
 
 interface ReportsTabsProps {
-  mockHeuresParChantier: any[];
-  mockHeuresParJour: any[];
-  mockAlerts: any[];
+  data: ReportData;
+  loading: boolean;
+  alerts: Alert[];
+  alertsLoading: boolean;
   showAllAlerts: boolean;
   setShowAllAlerts: (show: boolean) => void;
   alertStatuses: Record<number, string>;
   handleAlertStatusChange: (alertId: number, status: string) => void;
-  exportFormat: ExportFormat;
-  setExportFormat: (format: ExportFormat) => void;
+  exportFormat: string;
+  setExportFormat: (format: string) => void;
   exportInProgress: boolean;
-  handleExport: () => Promise<void>;
+  handleExport: () => void;
   handlePrintReport: () => void;
   customReportName: string;
   setCustomReportName: (name: string) => void;
-  savedReports: {id: string, name: string, filters: any}[];
+  savedReports: string[];
   handleSaveReport: () => void;
-  handleDeleteReport: (id: string) => void;
+  handleDeleteReport: (name: string) => void;
 }
 
 export const ReportsTabs: React.FC<ReportsTabsProps> = ({
-  mockHeuresParChantier,
-  mockHeuresParJour,
-  mockAlerts,
+  data,
+  loading,
+  alerts,
+  alertsLoading,
   showAllAlerts,
   setShowAllAlerts,
   alertStatuses,
@@ -45,30 +46,24 @@ export const ReportsTabs: React.FC<ReportsTabsProps> = ({
   setCustomReportName,
   savedReports,
   handleSaveReport,
-  handleDeleteReport,
+  handleDeleteReport
 }) => {
   return (
-    <Tabs defaultValue="dashboard">
-      <TabsList className="grid w-full grid-cols-5 mb-4">
+    <Tabs defaultValue="dashboard" className="w-full">
+      <TabsList className="grid w-full grid-cols-3">
         <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
         <TabsTrigger value="alerts">Alertes</TabsTrigger>
-        <TabsTrigger value="detailed">Détaillé</TabsTrigger>
         <TabsTrigger value="export">Export</TabsTrigger>
-        <TabsTrigger value="custom">Personnalisé</TabsTrigger>
       </TabsList>
 
-      {/* Dashboard Tab */}
-      <TabsContent value="dashboard">
-        <DashboardTab 
-          mockHeuresParChantier={mockHeuresParChantier}
-          mockHeuresParJour={mockHeuresParJour}
-        />
+      <TabsContent value="dashboard" className="space-y-4">
+        <DashboardTab data={data} loading={loading} />
       </TabsContent>
 
-      {/* Alerts Tab */}
-      <TabsContent value="alerts">
-        <AlertsTab
-          alerts={mockAlerts}
+      <TabsContent value="alerts" className="space-y-4">
+        <AlertsTab 
+          alerts={alerts}
+          loading={alertsLoading}
           showAllAlerts={showAllAlerts}
           setShowAllAlerts={setShowAllAlerts}
           alertStatuses={alertStatuses}
@@ -76,25 +71,13 @@ export const ReportsTabs: React.FC<ReportsTabsProps> = ({
         />
       </TabsContent>
 
-      {/* Detailed Tab */}
-      <TabsContent value="detailed">
-        <DetailedTab />
-      </TabsContent>
-
-      {/* Export Tab */}
-      <TabsContent value="export">
-        <ExportTab
+      <TabsContent value="export" className="space-y-4">
+        <ExportTab 
           exportFormat={exportFormat}
           setExportFormat={setExportFormat}
           exportInProgress={exportInProgress}
           handleExport={handleExport}
           handlePrintReport={handlePrintReport}
-        />
-      </TabsContent>
-
-      {/* Custom Reports Tab */}
-      <TabsContent value="custom">
-        <CustomReportsTab
           customReportName={customReportName}
           setCustomReportName={setCustomReportName}
           savedReports={savedReports}

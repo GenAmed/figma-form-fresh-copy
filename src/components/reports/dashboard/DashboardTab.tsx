@@ -2,16 +2,26 @@
 import React, { useState } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ChartContainer } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, LineChart, Line } from "recharts";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+import { Loader2 } from "lucide-react";
+import { ReportData } from "@/hooks/useReportsData";
 
 interface DashboardTabProps {
-  mockHeuresParChantier: any[];
-  mockHeuresParJour: any[];
+  data: ReportData;
+  loading: boolean;
 }
 
-export const DashboardTab = ({ mockHeuresParChantier, mockHeuresParJour }: DashboardTabProps) => {
+export const DashboardTab = ({ data, loading }: DashboardTabProps) => {
   const [chartType, setChartType] = useState<"bar" | "line">("bar");
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-40">
+        <Loader2 className="h-8 w-8 text-[#BD1E28] animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -30,14 +40,25 @@ export const DashboardTab = ({ mockHeuresParChantier, mockHeuresParJour }: Dashb
         </CardHeader>
         <CardContent>
           <ChartContainer config={{ chantiers: {} }} className="w-full h-[300px]">
-            <BarChart data={mockHeuresParChantier}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="heures" fill="#BD1E28" />
-            </BarChart>
+            {chartType === "bar" ? (
+              <BarChart data={data.heuresParChantier}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="heures" fill="#BD1E28" />
+              </BarChart>
+            ) : (
+              <LineChart data={data.heuresParChantier}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="heures" stroke="#BD1E28" strokeWidth={2} />
+              </LineChart>
+            )}
           </ChartContainer>
         </CardContent>
       </Card>
@@ -48,7 +69,7 @@ export const DashboardTab = ({ mockHeuresParChantier, mockHeuresParJour }: Dashb
         </CardHeader>
         <CardContent>
           <ChartContainer config={{ jours: {} }} className="w-full h-[300px]">
-            <BarChart data={mockHeuresParJour}>
+            <BarChart data={data.heuresParJour}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis />
@@ -68,19 +89,19 @@ export const DashboardTab = ({ mockHeuresParChantier, mockHeuresParJour }: Dashb
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-500">Heures totales</p>
-              <p className="text-2xl font-bold">355h</p>
+              <p className="text-2xl font-bold">{data.totalHeures}h</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-500">Employés actifs</p>
-              <p className="text-2xl font-bold">12</p>
+              <p className="text-2xl font-bold">{data.employesActifs}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-500">Chantiers actifs</p>
-              <p className="text-2xl font-bold">5</p>
+              <p className="text-2xl font-bold">{data.chantiersActifs}</p>
             </div>
             <div className="bg-gray-50 p-4 rounded-lg">
               <p className="text-sm text-gray-500">Heures moyennes/employé</p>
-              <p className="text-2xl font-bold">29.6h</p>
+              <p className="text-2xl font-bold">{data.moyenneHeuresEmploye}h</p>
             </div>
           </div>
         </CardContent>

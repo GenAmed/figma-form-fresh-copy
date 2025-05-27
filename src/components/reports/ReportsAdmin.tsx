@@ -3,18 +3,11 @@ import React from "react";
 import { User } from "@/lib/auth";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { useReports } from "@/hooks/useReports";
+import { useReportsData } from "@/hooks/useReportsData";
+import { useAlertsData } from "@/hooks/useAlertsData";
 import { ReportsHeader } from "./ReportsHeader";
 import { ReportsTabs } from "./ReportsTabs";
 import { FiltersPanel } from "./filters/FiltersPanel";
-
-// Import our mock data
-import { 
-  mockChantiers, 
-  mockEmployes, 
-  mockHeuresParChantier, 
-  mockHeuresParJour, 
-  mockAlerts 
-} from "./mock/mockData";
 
 interface ReportsAdminProps {
   user: User;
@@ -43,8 +36,14 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
     handlePrintReport,
     handleAlertStatusChange,
     handleSaveReport,
-    handleDeleteReport
-  } = useReports(mockChantiers, mockEmployes);
+    handleDeleteReport,
+    mockChantiers,
+    mockEmployes
+  } = useReports();
+
+  // Utiliser les hooks pour récupérer les données réelles
+  const { data: reportsData, loading: reportsLoading } = useReportsData(dateRange);
+  const { alerts, setAlerts, loading: alertsLoading } = useAlertsData();
 
   return (
     <div className="min-h-screen bg-[#F8F8F8] pb-20">
@@ -76,9 +75,10 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
       {/* Main Content */}
       <main className="pt-20 px-4 pb-2">
         <ReportsTabs 
-          mockHeuresParChantier={mockHeuresParChantier}
-          mockHeuresParJour={mockHeuresParJour}
-          mockAlerts={mockAlerts}
+          data={reportsData}
+          loading={reportsLoading}
+          alerts={alerts}
+          alertsLoading={alertsLoading}
           showAllAlerts={showAllAlerts}
           setShowAllAlerts={setShowAllAlerts}
           alertStatuses={alertStatuses}
