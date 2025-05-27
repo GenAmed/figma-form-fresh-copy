@@ -48,21 +48,16 @@ const Home: React.FC = () => {
     );
   }
 
-  // Convertir le profil Supabase vers le format User attendu
-  const userForComponents = {
+  console.log("✅ [Home] Rendu du composant pour:", profile.role);
+
+  return profile.role === "admin" ? <HomeAdmin /> : <HomeWorker user={{
     id: profile.id,
     email: profile.email,
     name: profile.name,
     role: profile.role,
     avatarUrl: profile.avatar_url || "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
     phone: profile.phone
-  };
-
-  console.log("✅ [Home] Rendu du composant pour:", profile.role);
-
-  return profile.role === "admin" ? 
-    <HomeAdmin user={userForComponents} /> : 
-    <HomeWorker user={userForComponents} />;
+  }} />;
 };
 
 export default Home;

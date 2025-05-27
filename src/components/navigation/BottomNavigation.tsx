@@ -2,15 +2,15 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Home, Clock, CalendarDays, Settings, User, BarChart } from "lucide-react";
-import { getCurrentUser } from "@/lib/auth";
+import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 
 interface BottomNavigationProps {
   activeTab: string;
 }
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab }) => {
-  const user = getCurrentUser();
-  const isAdmin = user?.role === "admin";
+  const { profile } = useSupabaseProfile();
+  const isAdmin = profile?.role === "admin";
 
   return (
     <div id="footer" className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">

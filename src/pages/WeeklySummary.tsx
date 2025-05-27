@@ -2,28 +2,34 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { WeeklySummaryWorker } from "@/components/tracking/WeeklySummaryWorker";
-import { getCurrentUser, User } from "@/lib/auth";
-import { useEffect, useState } from "react";
+import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 
 const WeeklySummary: React.FC = () => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const currentUser = getCurrentUser();
-    setUser(currentUser);
-    setLoading(false);
-  }, []);
+  const { profile, loading, user } = useSupabaseProfile();
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Chargement...</div>;
+    return (
+      <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return <Navigate to="/" />;
   }
 
-  return <WeeklySummaryWorker user={user} />;
+  return <WeeklySummaryWorker user={{
+    id: profile.id,
+    email: profile.email,
+    name: profile.name,
+    role: profile.role,
+    avatarUrl: profile.avatar_url || "https://storage.googleapis.com/uxpilot-auth.appspot.com/avatars/avatar-2.jpg",
+    phone: profile.phone
+  }} />;
 };
 
 export default WeeklySummary;

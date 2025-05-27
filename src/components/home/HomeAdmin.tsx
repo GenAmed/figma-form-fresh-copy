@@ -1,7 +1,7 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
-import { User } from "@/lib/auth";
 import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle, Check, WifiOff, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { scheduleUnassignedWorkersCheck, checkAndNotifyUnassignedWorkers } from "@/services/assignment/assignmentCheckService";
@@ -11,17 +11,27 @@ import { MessageNotifications } from "@/components/admin/MessageNotifications";
 import { useHomeStats } from "@/hooks/useHomeStats";
 import { useRecentAlerts } from "@/hooks/useRecentAlerts";
 import { useRecentActivity } from "@/hooks/useRecentActivity";
+import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 
-interface HomeAdminProps {
-  user: User;
-}
-
-export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
+export const HomeAdmin: React.FC = () => {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState<boolean>(true);
   const { stats, loading: statsLoading } = useHomeStats();
   const { alerts, loading: alertsLoading } = useRecentAlerts();
   const { activities, loading: activitiesLoading } = useRecentActivity();
+  const { profile, user } = useSupabaseProfile();
+
+  // Si pas de profil, ne pas afficher le composant
+  if (!profile || !user) {
+    return (
+      <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
+          <p className="text-gray-600">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
 
   // Vérifier la connexion à Supabase
   useEffect(() => {
@@ -88,7 +98,7 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
       <header className="bg-[#BD1E28] text-white p-4">
         <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-lg font-bold">Bonjour, {user.name}</h1>
+            <h1 className="text-lg font-bold">Bonjour, {profile.name}</h1>
             <p className="text-sm opacity-90">Rôle: Administrateur</p>
           </div>
           <div className="relative flex items-center">
