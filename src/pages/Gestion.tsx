@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { WorksiteManagement } from "@/components/gestion/WorksiteManagement";
@@ -10,6 +9,7 @@ import { AddUser } from "@/components/gestion/AddUser";
 import { UserDetails } from "@/components/gestion/UserDetails";
 import { AddAssignment } from "@/components/gestion/AddAssignment";
 import { EditUser } from "@/components/gestion/EditUser";
+import { InternalMessagesManager } from "@/components/admin/InternalMessagesManager";
 import { getCurrentUser } from "@/lib/auth";
 
 const Gestion = () => {
@@ -36,6 +36,7 @@ const Gestion = () => {
       <Route path="/users/details/:id" element={<UserDetails />} />
       <Route path="/users/edit/:id" element={<EditUser />} />
       <Route path="/users/details/:id/add-assignment" element={<AddAssignment />} />
+      <Route path="/messages" element={<InternalMessagesManager />} />
     </Routes>
   );
 };

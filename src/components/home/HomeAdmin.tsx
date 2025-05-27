@@ -1,13 +1,13 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
-import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle, Check, WifiOff } from "lucide-react";
+import { Building, ChevronRight, Clock, Users, FileText, AlertTriangle, Check, WifiOff, MessageSquare } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { scheduleUnassignedWorkersCheck, checkAndNotifyUnassignedWorkers } from "@/services/assignment/assignmentCheckService";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { MessageNotifications } from "@/components/admin/MessageNotifications";
 
 interface HomeAdminProps {
   user: User;
