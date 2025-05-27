@@ -54,6 +54,45 @@ export type Database = {
           },
         ]
       }
+      internal_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          priority: string
+          sender_email: string
+          sender_id: string
+          sender_name: string
+          status: string
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          priority?: string
+          sender_email: string
+          sender_id: string
+          sender_name: string
+          status?: string
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          priority?: string
+          sender_email?: string
+          sender_id?: string
+          sender_name?: string
+          status?: string
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active: boolean
