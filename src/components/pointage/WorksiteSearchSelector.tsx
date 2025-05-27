@@ -1,6 +1,6 @@
 
-import React, { useState, useMemo } from "react";
-import { Search, ChevronDown, MapPin } from "lucide-react";
+import React, { useState, useMemo, useEffect } from "react";
+import { Search, ChevronDown, MapPin, Loader } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,31 +8,14 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-interface Worksite {
-  id: string;
-  name: string;
-  address?: string;
-  status?: string;
-}
+import { getWorksites, Worksite } from "@/services/worksiteService";
+import { toast } from "sonner";
 
 interface WorksiteSearchSelectorProps {
   selectedWorksite: string;
   onChange: (worksiteId: string) => void;
   disabled: boolean;
 }
-
-// Mock data - sera remplacé par les vraies données plus tard
-const mockWorksites: Worksite[] = [
-  { id: "1", name: "Chantier Paris-Nord", address: "75018 Paris", status: "active" },
-  { id: "2", name: "Chantier Marseille-Port", address: "13002 Marseille", status: "active" },
-  { id: "3", name: "Chantier Lyon-Est", address: "69003 Lyon", status: "active" },
-  { id: "4", name: "Chantier Bordeaux Centre", address: "33000 Bordeaux", status: "active" },
-  { id: "5", name: "Chantier Toulouse Sud", address: "31000 Toulouse", status: "active" },
-  { id: "6", name: "Chantier Nice Promenade", address: "06000 Nice", status: "active" },
-  { id: "7", name: "Chantier Nantes Atlantique", address: "44000 Nantes", status: "active" },
-  { id: "8", name: "Chantier Strasbourg Centre", address: "67000 Strasbourg", status: "active" },
-];
 
 export const WorksiteSearchSelector: React.FC<WorksiteSearchSelectorProps> = ({ 
   selectedWorksite, 
@@ -41,19 +24,39 @@ export const WorksiteSearchSelector: React.FC<WorksiteSearchSelectorProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [worksites, setWorksites] = useState<Worksite[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const selectedWorksiteData = mockWorksites.find(ws => ws.id === selectedWorksite);
+  const selectedWorksiteData = worksites.find(ws => ws.id === selectedWorksite);
+
+  // Charger les chantiers au montage du composant
+  useEffect(() => {
+    const loadWorksites = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getWorksites();
+        setWorksites(data);
+      } catch (error) {
+        console.error('Erreur lors du chargement des chantiers:', error);
+        toast.error("Erreur lors du chargement des chantiers");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadWorksites();
+  }, []);
 
   // Filtrer les chantiers selon la recherche
   const filteredWorksites = useMemo(() => {
-    if (!searchTerm.trim()) return mockWorksites;
+    if (!searchTerm.trim()) return worksites;
     
     const term = searchTerm.toLowerCase();
-    return mockWorksites.filter(worksite => 
+    return worksites.filter(worksite => 
       worksite.name.toLowerCase().includes(term) ||
       worksite.address?.toLowerCase().includes(term)
     );
-  }, [searchTerm]);
+  }, [searchTerm, worksites]);
 
   const handleSelect = (worksiteId: string) => {
     onChange(worksiteId);
@@ -74,12 +77,17 @@ export const WorksiteSearchSelector: React.FC<WorksiteSearchSelectorProps> = ({
             role="combobox"
             aria-expanded={isOpen}
             className="w-full justify-between p-3 h-auto text-left bg-white border border-gray-300 hover:bg-gray-50"
-            disabled={disabled}
+            disabled={disabled || isLoading}
           >
             <div className="flex items-center gap-2">
               <MapPin className="h-4 w-4 text-gray-400" />
               <div>
-                {selectedWorksiteData ? (
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader className="h-4 w-4 animate-spin" />
+                    <span className="text-gray-500">Chargement...</span>
+                  </div>
+                ) : selectedWorksiteData ? (
                   <div>
                     <div className="font-medium text-[#333333]">
                       {selectedWorksiteData.name}
@@ -133,6 +141,11 @@ export const WorksiteSearchSelector: React.FC<WorksiteSearchSelectorProps> = ({
                   )}
                 </button>
               ))
+            ) : isLoading ? (
+              <div className="p-3 text-center text-gray-500">
+                <Loader className="h-4 w-4 animate-spin mx-auto mb-2" />
+                Chargement des chantiers...
+              </div>
             ) : (
               <div className="p-3 text-center text-gray-500">
                 Aucun chantier trouvé

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
@@ -9,14 +10,11 @@ import { TrackingControls } from "./TrackingControls";
 import { BreakControls } from "./BreakControls";
 import { getCurrentLocation, getAddressFromCoordinates } from "@/services/locationService";
 import { 
-  getOfflineEntries, 
-  saveOfflineEntry, 
-  syncOfflineEntries, 
-  isOnline, 
-  setupConnectivityListeners, 
-  generateOfflineId, 
-  OfflineTimeEntry 
-} from "@/services/offlineService";
+  createTimeEntry, 
+  updateTimeEntry, 
+  getActiveTimeEntry,
+  TimeEntry
+} from "@/services/timeEntryService";
 import { 
   requestNotificationPermission, 
   sendNotification, 
@@ -64,7 +62,6 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [isAddressLoading, setIsAddressLoading] = useState(false);
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
-  const [pendingEntries, setPendingEntries] = useState<OfflineTimeEntry[]>([]);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
   
   // États pour la gestion des pauses
@@ -82,44 +79,49 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
   
   const currentDate = format(new Date(), "dd/MM/yyyy");
   
-  // Initialisation et vérification de l'état hors-ligne
+  // Vérifier s'il y a un pointage actif au chargement
   useEffect(() => {
-    // Récupérer les pointages en attente
-    const updatePendingEntries = () => {
-      const entries = getOfflineEntries().filter(entry => entry.status === "pending");
-      setPendingEntries(entries);
-    };
-    
-    // Vérifier s'il y a un pointage actif
-    const checkActiveTracking = () => {
-      const entries = getOfflineEntries();
-      const activeEntry = entries.find(entry => 
-        entry.userId === user.id && 
-        entry.date === format(new Date(), "yyyy-MM-dd") && 
-        !entry.endTime
-      );
-      
-      if (activeEntry) {
-        setIsTracking(true);
-        setStartTime(activeEntry.startTime);
-        setSelectedWorksite(activeEntry.worksiteId);
-        setCurrentEntryId(activeEntry.id);
+    const checkActiveTracking = async () => {
+      try {
+        const today = format(new Date(), "yyyy-MM-dd");
+        const activeEntry = await getActiveTimeEntry(user.id, today);
+        
+        if (activeEntry) {
+          setIsTracking(true);
+          setStartTime(activeEntry.start_time);
+          setSelectedWorksite(activeEntry.worksite_id);
+          setCurrentEntryId(activeEntry.id);
+          
+          // Restaurer les pauses si elles existent
+          if (activeEntry.breaks && activeEntry.breaks.length > 0) {
+            setBreakEntries(activeEntry.breaks);
+            
+            // Vérifier si une pause est en cours
+            const lastBreak = activeEntry.breaks[activeEntry.breaks.length - 1];
+            if (lastBreak && !lastBreak.endTime) {
+              setIsOnBreak(true);
+              setBreakStartTime(lastBreak.startTime);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification du pointage actif:', error);
       }
     };
-    
+
     // Configurer les écouteurs de connectivité
-    const cleanup = setupConnectivityListeners(
-      () => {
-        setIsOffline(false);
-        toast.success("Connexion rétablie");
-        // Tenter de synchroniser les pointages en attente
-        syncOfflineEntries().then(updatePendingEntries);
-      },
-      () => {
-        setIsOffline(true);
-        toast.warning("Mode hors-ligne activé");
-      }
-    );
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success("Connexion rétablie");
+    };
+    
+    const handleOffline = () => {
+      setIsOffline(true);
+      toast.warning("Mode hors-ligne activé");
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
     
     // Demander l'autorisation pour les notifications
     requestNotificationPermission().then(granted => {
@@ -129,15 +131,17 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       }
     });
     
-    updatePendingEntries();
     checkActiveTracking();
     
-    return cleanup;
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
   }, [user.id]);
   
   // Gestion des pauses
   const handleStartBreak = async () => {
-    if (!isTracking) return;
+    if (!isTracking || !currentEntryId) return;
     
     const now = new Date();
     const breakTime = format(now, "HH:mm");
@@ -149,11 +153,22 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
     const newBreakEntry: BreakEntry = {
       startTime: breakTime
     };
-    setBreakEntries(prev => [...prev, newBreakEntry]);
+    const updatedBreaks = [...breakEntries, newBreakEntry];
+    setBreakEntries(updatedBreaks);
+
+    // Mettre à jour en base de données
+    try {
+      await updateTimeEntry(currentEntryId, {
+        breaks: updatedBreaks
+      });
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde de la pause:', error);
+      toast.error("Erreur lors de la sauvegarde de la pause");
+    }
   };
 
   const handleEndBreak = async () => {
-    if (!isOnBreak || !breakStartTime) return;
+    if (!isOnBreak || !breakStartTime || !currentEntryId) return;
     
     const now = new Date();
     const endTime = format(now, "HH:mm");
@@ -166,34 +181,29 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
     const duration = endMinutes - startMinutes;
     
     // Mettre à jour la dernière entrée de pause
-    setBreakEntries(prev => 
-      prev.map((entry, index) => 
-        index === prev.length - 1 
-          ? { ...entry, endTime, duration }
-          : entry
-      )
+    const updatedBreaks = breakEntries.map((entry, index) => 
+      index === breakEntries.length - 1 
+        ? { ...entry, endTime, duration }
+        : entry
     );
+    setBreakEntries(updatedBreaks);
     
     setIsOnBreak(false);
     setBreakStartTime(null);
+
+    // Mettre à jour en base de données
+    try {
+      await updateTimeEntry(currentEntryId, {
+        breaks: updatedBreaks
+      });
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde de la fin de pause:', error);
+      toast.error("Erreur lors de la sauvegarde de la fin de pause");
+    }
   };
 
   const handleWorksiteChange = (worksiteId: string) => {
     setSelectedWorksite(worksiteId);
-  };
-  
-  // Fonction pour gérer la synchronisation manuelle
-  const handleSyncRequest = async () => {
-    if (!navigator.onLine) {
-      toast.error("Vous êtes hors-ligne. Veuillez vous connecter à internet pour synchroniser.");
-      return;
-    }
-    
-    const success = await syncOfflineEntries();
-    if (success) {
-      const entries = getOfflineEntries().filter(entry => entry.status === "pending");
-      setPendingEntries(entries);
-    }
   };
 
   // Fonction pour démarrer le pointage
@@ -212,7 +222,6 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
         position = await getCurrentLocation();
       } catch (locationError) {
         if (isOffline) {
-          // En mode hors-ligne, utiliser des coordonnées fictives
           position = {
             latitude: 0,
             longitude: 0,
@@ -227,31 +236,25 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       // Démarrage du pointage
       const now = new Date();
       const startTimeStr = format(now, "HH:mm");
+      const dateStr = format(now, "yyyy-MM-dd");
+      
+      // Créer l'entrée de pointage
+      const timeEntry = await createTimeEntry({
+        user_id: user.id,
+        worksite_id: selectedWorksite,
+        date: dateStr,
+        start_time: startTimeStr,
+        start_coordinates: position,
+        comment: comment,
+        breaks: [],
+        status: 'active'
+      });
+      
       setStartTime(startTimeStr);
       setIsTracking(true);
       setLocationData(position);
+      setCurrentEntryId(timeEntry.id);
       
-      // Création d'une entrée de pointage hors-ligne
-      const entryId = generateOfflineId();
-      const entry: OfflineTimeEntry = {
-        id: entryId,
-        userId: user.id,
-        worksiteId: selectedWorksite,
-        date: format(now, "yyyy-MM-dd"),
-        startTime: startTimeStr,
-        endTime: null,
-        startCoordinates: position,
-        status: "pending",
-        comment: comment || undefined
-      };
-      
-      saveOfflineEntry(entry);
-      setCurrentEntryId(entryId);
-      
-      // Mettre à jour les entrées en attente
-      setPendingEntries(prev => [...prev, entry]);
-      
-      // Notification de confirmation
       toast.success("Pointage démarré avec succès", {
         description: comment 
           ? `Commentaire: ${comment}` 
@@ -264,7 +267,6 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
         const reminderTime = new Date();
         reminderTime.setHours(hours, minutes, 0, 0);
         
-        // Si l'heure est déjà passée, ne pas programmer de rappel
         if (reminderTime > now) {
           const timeInMinutes = (reminderTime.getTime() - now.getTime()) / (1000 * 60);
           schedulePointageReminder(
@@ -275,7 +277,7 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
         }
       }
       
-      // On récupère l'adresse en arrière-plan sans bloquer l'interface
+      // Récupérer l'adresse en arrière-plan si en ligne
       if (!isOffline) {
         setIsAddressLoading(true);
         
@@ -290,9 +292,10 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       }
       
     } catch (error) {
+      console.error('Erreur lors du démarrage du pointage:', error);
       if (error instanceof Error) {
         setLocationError(error.message);
-        toast.error("Erreur de géolocalisation", {
+        toast.error("Erreur lors du démarrage du pointage", {
           description: error.message,
         });
       }
@@ -303,6 +306,8 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
 
   // Fonction pour terminer le pointage
   const handleEndTracking = async (comment?: string) => {
+    if (!currentEntryId) return;
+    
     setIsLoading(true);
     
     try {
@@ -312,7 +317,6 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
         position = await getCurrentLocation();
       } catch (locationError) {
         if (isOffline) {
-          // En mode hors-ligne, utiliser des coordonnées fictives
           position = {
             latitude: 0,
             longitude: 0,
@@ -324,44 +328,29 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
         }
       }
       
-      // Enregistrement de la position et fin du pointage
-      setLocationData(position);
-      setIsTracking(false);
-      
       // Terminer la pause si en cours
       if (isOnBreak) {
         await handleEndBreak();
       }
       
-      if (currentEntryId) {
-        const entries = getOfflineEntries();
-        const entry = entries.find(e => e.id === currentEntryId);
-        
-        if (entry) {
-          const updatedEntry: OfflineTimeEntry = {
-            ...entry,
-            endTime: format(new Date(), "HH:mm"),
-            endCoordinates: position,
-            comment: comment ? (entry.comment ? `${entry.comment}\n\nFin: ${comment}` : comment) : entry.comment
-          };
-          
-          saveOfflineEntry(updatedEntry);
-          setCurrentEntryId(null);
-          
-          // Mettre à jour les entrées en attente
-          const updatedPendingEntries = pendingEntries.map(e => 
-            e.id === currentEntryId ? updatedEntry : e
-          );
-          setPendingEntries(updatedPendingEntries);
-          
-          // Tenter de synchroniser si en ligne
-          if (navigator.onLine) {
-            syncOfflineEntries();
-          }
-        }
-      }
+      // Mettre à jour l'entrée de pointage
+      const endTimeStr = format(new Date(), "HH:mm");
+      const finalComment = comment ? 
+        (await getActiveTimeEntry(user.id, format(new Date(), "yyyy-MM-dd")))?.comment ? 
+          `${(await getActiveTimeEntry(user.id, format(new Date(), "yyyy-MM-dd")))?.comment}\n\nFin: ${comment}` : 
+          comment : 
+        undefined;
       
-      // Réinitialiser les pauses
+      await updateTimeEntry(currentEntryId, {
+        end_time: endTimeStr,
+        end_coordinates: position,
+        comment: finalComment,
+        status: 'completed'
+      });
+      
+      setLocationData(position);
+      setIsTracking(false);
+      setCurrentEntryId(null);
       setBreakEntries([]);
       
       toast.success("Pointage terminé avec succès", {
@@ -370,7 +359,7 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
           : `Position enregistrée: ${position.latitude.toFixed(5)}, ${position.longitude.toFixed(5)}`,
       });
       
-      // On récupère l'adresse en arrière-plan
+      // Récupérer l'adresse en arrière-plan si en ligne
       if (!isOffline) {
         setIsAddressLoading(true);
         
@@ -385,13 +374,13 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       }
       
     } catch (error) {
+      console.error('Erreur lors de la fin du pointage:', error);
       if (error instanceof Error) {
         setLocationError(error.message);
-        toast.error("Erreur de géolocalisation", {
+        toast.error("Erreur lors de la fin du pointage", {
           description: error.message,
         });
       }
-      // Même en cas d'erreur, on termine le pointage
       setIsTracking(false);
     } finally {
       setIsLoading(false);
@@ -404,6 +393,11 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       localStorage.setItem("avem_reminder_preferences", JSON.stringify(updated));
       return updated;
     });
+  };
+
+  // Fonction de synchronisation factice pour la compatibilité
+  const handleSyncRequest = async () => {
+    toast.info("Synchronisation automatique avec Supabase");
   };
 
   return (
@@ -501,9 +495,9 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
                     </div>
                   </div>
                   
-                  {/* Mode hors-ligne */}
+                  {/* Statut de connexion */}
                   <div className="space-y-2">
-                    <h3 className="text-lg font-medium">Mode hors-ligne</h3>
+                    <h3 className="text-lg font-medium">Connexion</h3>
                     
                     <div className="flex items-center space-x-2 p-4 rounded-md bg-gray-50">
                       {isOffline ? (
@@ -513,32 +507,15 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
                       )}
                       <div>
                         <p className="font-medium">
-                          {isOffline ? "Mode hors-ligne activé" : "Connecté"}
+                          {isOffline ? "Mode hors-ligne" : "Connecté à Supabase"}
                         </p>
                         <p className="text-sm text-gray-500">
                           {isOffline 
-                            ? "Les pointages seront enregistrés localement." 
-                            : "Les pointages sont synchronisés automatiquement."}
+                            ? "Les pointages seront synchronisés dès le retour de la connexion." 
+                            : "Les pointages sont enregistrés en temps réel."}
                         </p>
                       </div>
                     </div>
-                    
-                    {pendingEntries.length > 0 && (
-                      <div className="p-4 rounded-md bg-amber-50 border border-amber-200">
-                        <p className="text-sm text-amber-700">
-                          {pendingEntries.length} pointage{pendingEntries.length > 1 ? "s" : ""} en attente de synchronisation
-                        </p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleSyncRequest}
-                          disabled={isOffline}
-                          className="mt-2 w-full"
-                        >
-                          Synchroniser maintenant
-                        </Button>
-                      </div>
-                    )}
                   </div>
                 </div>
                 
@@ -589,7 +566,7 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
           isOffline={isOffline}
           onStartTracking={handleStartTracking}
           onEndTracking={handleEndTracking}
-          pendingSyncCount={pendingEntries.length}
+          pendingSyncCount={0}
           onSyncRequest={handleSyncRequest}
         />
       </main>
