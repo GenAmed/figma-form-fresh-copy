@@ -20,21 +20,13 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   const { user, profile, loading } = useAuth();
 
   useEffect(() => {
-    // Wait for loading to complete
     if (loading) return;
 
-    console.log('AuthGuard check:', {
-      path: location.pathname,
-      requireAuth,
-      requireRole,
-      hasUser: !!user,
-      userRole: profile?.role
-    });
-
+    const currentPath = location.pathname;
+    
     // Public route (login page)
     if (!requireAuth) {
-      if (user && location.pathname === "/") {
-        console.log('Redirecting authenticated user to /home');
+      if (user && currentPath === "/") {
         navigate("/home", { replace: true });
       }
       return;
@@ -42,22 +34,19 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
 
     // Protected routes
     if (!user) {
-      console.log('No user, redirecting to login');
-      navigate("/", { replace: true });
+      if (currentPath !== "/") {
+        navigate("/", { replace: true });
+      }
       return;
     }
 
     // Role-based access
-    if (requireRole && (!profile || profile.role !== requireRole)) {
-      console.log('Role mismatch or no profile, redirecting to /home');
+    if (requireRole && profile && profile.role !== requireRole) {
       navigate("/home", { replace: true });
       return;
     }
+  }, [loading, user, profile?.role, requireAuth, requireRole, location.pathname, navigate]);
 
-    console.log('Access granted');
-  }, [loading, user, profile, requireAuth, requireRole, location.pathname, navigate]);
-
-  // Loading screen
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">

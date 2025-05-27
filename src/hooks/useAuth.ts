@@ -23,6 +23,35 @@ export const useAuth = () => {
   useEffect(() => {
     let mounted = true;
 
+    const fetchProfile = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", userId)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (mounted && data) {
+          setProfile({
+            id: data.id,
+            name: data.name || 'Utilisateur',
+            email: data.email,
+            role: (data.role === "admin" || data.role === "ouvrier") ? data.role : "ouvrier",
+            avatar_url: data.avatar_url,
+            phone: data.phone,
+            active: data.active !== false
+          });
+        }
+      } catch (err: any) {
+        if (mounted) {
+          console.error('Error fetching profile:', err);
+          setError(err.message);
+        }
+      }
+    };
+
     // Get initial session
     const getInitialSession = async () => {
       try {
@@ -35,58 +64,19 @@ export const useAuth = () => {
           
           if (session?.user) {
             await fetchProfile(session.user.id);
-          } else {
-            setProfile(null);
-            setLoading(false);
           }
+          setLoading(false);
         }
       } catch (err: any) {
-        console.error('Error getting session:', err);
         if (mounted) {
+          console.error('Error getting session:', err);
           setError(err.message);
           setLoading(false);
         }
       }
     };
 
-    // Fetch user profile
-    const fetchProfile = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .maybeSingle();
-
-        if (error) throw error;
-        
-        if (mounted) {
-          if (data) {
-            setProfile({
-              id: data.id,
-              name: data.name || 'Utilisateur',
-              email: data.email,
-              role: (data.role === "admin" || data.role === "ouvrier") ? data.role : "ouvrier",
-              avatar_url: data.avatar_url,
-              phone: data.phone,
-              active: data.active !== false
-            });
-          } else {
-            setProfile(null);
-          }
-          setLoading(false);
-        }
-      } catch (err: any) {
-        console.error('Error fetching profile:', err);
-        if (mounted) {
-          setError(err.message);
-          setProfile(null);
-          setLoading(false);
-        }
-      }
-    };
-
-    // Listen for auth changes
+    // Auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
@@ -97,12 +87,11 @@ export const useAuth = () => {
           setError(null);
           
           if (session?.user) {
-            setLoading(true);
             await fetchProfile(session.user.id);
           } else {
             setProfile(null);
-            setLoading(false);
           }
+          setLoading(false);
         }
       }
     );

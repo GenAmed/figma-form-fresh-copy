@@ -7,15 +7,6 @@ import { useAuth } from "@/hooks/useAuth";
 const Home: React.FC = () => {
   const { profile, loading, error, user } = useAuth();
 
-  console.log("🏠 [Home] État:", {
-    hasProfile: !!profile,
-    hasUser: !!user,
-    loading,
-    error,
-    profileRole: profile?.role,
-    userEmail: user?.email
-  });
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
@@ -47,8 +38,6 @@ const Home: React.FC = () => {
       </div>
     );
   }
-
-  console.log("✅ [Home] Rendu du composant pour:", profile.role);
 
   const userForComponents = {
     id: profile.id,
