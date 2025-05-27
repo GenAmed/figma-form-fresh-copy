@@ -20,10 +20,14 @@ export const useSupabaseProfile = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchProfile = async () => {
       if (!user) {
-        setProfile(null);
-        setError(null);
+        if (mounted) {
+          setProfile(null);
+          setError(null);
+        }
         return;
       }
 
@@ -38,6 +42,8 @@ export const useSupabaseProfile = () => {
           .select("*")
           .eq("id", user.id)
           .maybeSingle();
+
+        if (!mounted) return;
 
         if (error) {
           console.error("❌ Erreur lors de la récupération du profil:", error);
@@ -61,18 +67,25 @@ export const useSupabaseProfile = () => {
           setProfile(null);
         }
       } catch (error: any) {
+        if (!mounted) return;
         console.error("❌ Erreur lors de la récupération du profil:", error);
         setError(error.message || "Erreur inconnue");
         setProfile(null);
       } finally {
-        setProfileLoading(false);
+        if (mounted) {
+          setProfileLoading(false);
+        }
       }
     };
 
-    // Ne récupérer le profil que si l'auth n'est pas en cours de chargement
+    // Ne récupérer le profil que si l'auth n'est pas en cours de chargement et qu'il y a un utilisateur
     if (!authLoading) {
       fetchProfile();
     }
+
+    return () => {
+      mounted = false;
+    };
   }, [user, authLoading]);
 
   return {

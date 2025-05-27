@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -36,12 +36,12 @@ export const SupabaseLoginForm: React.FC = () => {
   });
 
   // Redirection automatique quand l'utilisateur est connecté
-  useEffect(() => {
-    if (user) {
+  React.useEffect(() => {
+    if (user && !isSubmitting) {
       console.log("🔄 Utilisateur connecté, redirection vers /home");
       navigate("/home", { replace: true });
     }
-  }, [user, navigate]);
+  }, [user, navigate, isSubmitting]);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
@@ -52,7 +52,7 @@ export const SupabaseLoginForm: React.FC = () => {
       
       showSuccessToast("Connexion réussie", "Bienvenue !");
       
-      // La redirection se fera automatiquement via useEffect quand user sera mis à jour
+      // La redirection se fera automatiquement via useEffect
     } catch (error: any) {
       console.error("❌ Erreur de connexion:", error);
       

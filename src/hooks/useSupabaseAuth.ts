@@ -9,32 +9,40 @@ export const useSupabaseAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Récupérer la session initiale
-    const getInitialSession = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error('❌ Erreur lors de la récupération de la session:', error);
-      } else {
-        console.log('🔍 Session initiale:', session?.user?.email || 'Aucune session');
-        setSession(session);
-        setUser(session?.user ?? null);
-      }
+    let mounted = true;
+
+    // Fonction pour mettre à jour l'état d'authentification
+    const setAuthData = (session: Session | null) => {
+      if (!mounted) return;
+      
+      console.log('🔐 Setting auth data:', session?.user?.email || 'No session');
+      setSession(session);
+      setUser(session?.user ?? null);
       setLoading(false);
     };
-
-    getInitialSession();
 
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔐 Auth state changed:', event, session?.user?.email);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+        console.log('🔐 Auth state changed:', event);
+        setAuthData(session);
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Récupérer la session initiale
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ Erreur lors de la récupération de la session:', error);
+      } else {
+        console.log('🔍 Session initiale récupérée:', session?.user?.email || 'Aucune session');
+      }
+      setAuthData(session);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
