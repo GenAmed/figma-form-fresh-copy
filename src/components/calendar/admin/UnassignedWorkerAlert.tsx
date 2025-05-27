@@ -17,8 +17,8 @@ export const UnassignedWorkerAlert: React.FC<UnassignedWorkerAlertProps> = ({ un
   }
 
   const handleClick = () => {
-    // Navigate to the user management page
-    navigate("/gestion/users");
+    // Navigate to the user management page using hash navigation
+    window.location.hash = "#/gestion/users";
     
     // Show a toast with details about unassigned workers
     showToast(
@@ -26,7 +26,7 @@ export const UnassignedWorkerAlert: React.FC<UnassignedWorkerAlertProps> = ({ un
       `Visualisez les détails de chaque ouvrier non assigné`,
       "warning",
       5000,
-      "/gestion/users"
+      "#/gestion/users"
     );
   };
 

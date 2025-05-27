@@ -92,7 +92,7 @@ export const useAdminCalendar = () => {
           `Ouvriers sans assignation: ${workerNames}`,
           "warning",
           5000,
-          "/gestion/users"
+          "#/gestion/users"
         );
       }
     } catch (error) {
@@ -121,7 +121,7 @@ export const useAdminCalendar = () => {
       "Cette fonctionnalité sera bientôt disponible",
       "info",
       5000,
-      "/gestion"
+      "#/gestion"
     );
   };
 

@@ -22,7 +22,15 @@ export const showToast = (
     duration: duration,
     action: action ? {
       label: "Voir",
-      onClick: () => window.location.href = action
+      onClick: () => {
+        // Use hash-based navigation for single-page app
+        if (action.startsWith('http')) {
+          window.location.href = action;
+        } else {
+          // For internal routes, use hash navigation
+          window.location.hash = action;
+        }
+      }
     } : undefined
   });
 };
