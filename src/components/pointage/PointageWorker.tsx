@@ -1,12 +1,12 @@
-
 import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { WorksiteSelector } from "./WorksiteSelector";
+import { WorksiteSearchSelector } from "./WorksiteSearchSelector";
 import { LocationDisplay } from "./LocationDisplay";
 import { TrackingControls } from "./TrackingControls";
+import { BreakControls } from "./BreakControls";
 import { getCurrentLocation, getAddressFromCoordinates } from "@/services/locationService";
 import { 
   getOfflineEntries, 
@@ -49,6 +49,12 @@ interface LocationData {
   address?: string;
 }
 
+interface BreakEntry {
+  startTime: string;
+  endTime?: string;
+  duration?: number;
+}
+
 export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
   const [isTracking, setIsTracking] = useState(false);
   const [startTime, setStartTime] = useState<string>("");
@@ -60,6 +66,12 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
   const [pendingEntries, setPendingEntries] = useState<OfflineTimeEntry[]>([]);
   const [currentEntryId, setCurrentEntryId] = useState<string | null>(null);
+  
+  // États pour la gestion des pauses
+  const [isOnBreak, setIsOnBreak] = useState(false);
+  const [breakStartTime, setBreakStartTime] = useState<string | null>(null);
+  const [breakEntries, setBreakEntries] = useState<BreakEntry[]>([]);
+  
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [reminderSettings, setReminderSettings] = useState({
     morningReminder: true,
@@ -122,6 +134,53 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
     
     return cleanup;
   }, [user.id]);
+  
+  // Gestion des pauses
+  const handleStartBreak = async () => {
+    if (!isTracking) return;
+    
+    const now = new Date();
+    const breakTime = format(now, "HH:mm");
+    
+    setIsOnBreak(true);
+    setBreakStartTime(breakTime);
+    
+    // Ajouter l'entrée de pause
+    const newBreakEntry: BreakEntry = {
+      startTime: breakTime
+    };
+    setBreakEntries(prev => [...prev, newBreakEntry]);
+  };
+
+  const handleEndBreak = async () => {
+    if (!isOnBreak || !breakStartTime) return;
+    
+    const now = new Date();
+    const endTime = format(now, "HH:mm");
+    
+    // Calculer la durée de la pause
+    const startParts = breakStartTime.split(':').map(Number);
+    const endParts = endTime.split(':').map(Number);
+    const startMinutes = startParts[0] * 60 + startParts[1];
+    const endMinutes = endParts[0] * 60 + endParts[1];
+    const duration = endMinutes - startMinutes;
+    
+    // Mettre à jour la dernière entrée de pause
+    setBreakEntries(prev => 
+      prev.map((entry, index) => 
+        index === prev.length - 1 
+          ? { ...entry, endTime, duration }
+          : entry
+      )
+    );
+    
+    setIsOnBreak(false);
+    setBreakStartTime(null);
+  };
+
+  const handleWorksiteChange = (worksiteId: string) => {
+    setSelectedWorksite(worksiteId);
+  };
   
   // Fonction pour gérer la synchronisation manuelle
   const handleSyncRequest = async () => {
@@ -269,7 +328,11 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
       setLocationData(position);
       setIsTracking(false);
       
-      // Mise à jour de l'entrée de pointage
+      // Terminer la pause si en cours
+      if (isOnBreak) {
+        await handleEndBreak();
+      }
+      
       if (currentEntryId) {
         const entries = getOfflineEntries();
         const entry = entries.find(e => e.id === currentEntryId);
@@ -297,6 +360,9 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
           }
         }
       }
+      
+      // Réinitialiser les pauses
+      setBreakEntries([]);
       
       toast.success("Pointage terminé avec succès", {
         description: comment 
@@ -332,11 +398,6 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
     }
   };
 
-  const handleWorksiteChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedWorksite(e.target.value);
-  };
-  
-  // Gérer les changements dans les paramètres de rappel
   const handleReminderSettingChange = (setting: keyof typeof reminderSettings, value: any) => {
     setReminderSettings(prev => {
       const updated = { ...prev, [setting]: value };
@@ -494,8 +555,8 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
 
       {/* Main Content */}
       <main className="flex-1 px-4 pt-16 pb-20">
-        {/* Worksite Selection */}
-        <WorksiteSelector 
+        {/* Worksite Selection with Search */}
+        <WorksiteSearchSelector 
           selectedWorksite={selectedWorksite} 
           onChange={handleWorksiteChange} 
           disabled={isTracking} 
@@ -507,6 +568,16 @@ export const PointageWorker: React.FC<PointageWorkerProps> = ({ user }) => {
           locationError={locationError} 
           isAddressLoading={isAddressLoading}
           isOffline={isOffline} 
+        />
+
+        {/* Break Controls */}
+        <BreakControls
+          isTracking={isTracking}
+          isOnBreak={isOnBreak}
+          breakStartTime={breakStartTime}
+          onStartBreak={handleStartBreak}
+          onEndBreak={handleEndBreak}
+          disabled={isLoading}
         />
 
         {/* Time Tracking Controls */}
