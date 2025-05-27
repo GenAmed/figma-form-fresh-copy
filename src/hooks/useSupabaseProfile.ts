@@ -57,8 +57,44 @@ export const useSupabaseProfile = () => {
           setError(null);
         } else {
           console.log("ℹ️ Aucun profil trouvé pour cet utilisateur");
-          setProfile(null);
-          setError("Profil utilisateur non trouvé");
+          // Créer un profil par défaut si aucun n'existe
+          try {
+            console.log("🔧 Création d'un profil par défaut...");
+            const { data: newProfile, error: createError } = await supabase
+              .from("profiles")
+              .insert({
+                id: user.id,
+                name: user.email?.split('@')[0] || 'Utilisateur',
+                email: user.email || '',
+                role: 'ouvrier',
+                pin: '0000',
+                active: true
+              })
+              .select()
+              .single();
+
+            if (createError) {
+              console.error("❌ Erreur lors de la création du profil:", createError);
+              setError("Impossible de créer le profil utilisateur");
+            } else {
+              console.log("✅ Profil créé avec succès:", newProfile);
+              const profileData: UserProfile = {
+                id: newProfile.id,
+                name: newProfile.name,
+                email: newProfile.email,
+                role: newProfile.role as "ouvrier" | "admin",
+                avatar_url: newProfile.avatar_url,
+                phone: newProfile.phone,
+                active: newProfile.active
+              };
+              setProfile(profileData);
+              setError(null);
+            }
+          } catch (createError: any) {
+            console.error("❌ Erreur lors de la création du profil:", createError);
+            setError("Impossible de créer le profil utilisateur");
+            setProfile(null);
+          }
         }
       } catch (error: any) {
         console.error("❌ Erreur lors de la récupération du profil:", error);

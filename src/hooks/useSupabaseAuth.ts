@@ -42,6 +42,36 @@ export const useSupabaseAuth = () => {
       throw error;
     }
     
+    // Après la connexion réussie, récupérer le profil utilisateur et mettre à jour les métadonnées
+    if (data.user) {
+      console.log('✅ Sign in successful, fetching user profile...');
+      
+      try {
+        const { data: profile, error: profileError } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .maybeSingle();
+
+        if (profile && !profileError) {
+          console.log('📝 Updating user metadata with role:', profile.role);
+          
+          // Mettre à jour les métadonnées utilisateur avec le rôle
+          const { error: updateError } = await supabase.auth.updateUser({
+            data: { role: profile.role }
+          });
+
+          if (updateError) {
+            console.error('❌ Error updating user metadata:', updateError);
+          } else {
+            console.log('✅ User metadata updated successfully');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error fetching user profile:', error);
+      }
+    }
+    
     console.log('✅ Sign in successful:', data.user?.email);
     return data;
   };
