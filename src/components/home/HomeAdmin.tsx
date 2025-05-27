@@ -16,6 +16,7 @@ import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 export const HomeAdmin: React.FC = () => {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState<boolean>(true);
+  const [hasCheckedUnassigned, setHasCheckedUnassigned] = useState<boolean>(false);
   
   // Always call hooks at the top level
   const { stats, loading: statsLoading } = useHomeStats();
@@ -44,11 +45,15 @@ export const HomeAdmin: React.FC = () => {
     checkConnection();
   }, []);
 
-  // Set up the automatic check for unassigned workers
+  // Set up the automatic check for unassigned workers - only once
   useEffect(() => {
-    // Schedule the regular checks
-    scheduleUnassignedWorkersCheck();
-  }, []);
+    if (!hasCheckedUnassigned && profile?.role === "admin") {
+      console.log("🔍 [HomeAdmin] Setting up unassigned workers check");
+      // Schedule the regular checks
+      scheduleUnassignedWorkersCheck();
+      setHasCheckedUnassigned(true);
+    }
+  }, [profile, hasCheckedUnassigned]);
 
   // Early returns AFTER all hooks have been called
   if (!profile || !user) {
@@ -94,6 +99,11 @@ export const HomeAdmin: React.FC = () => {
     return action === "entry" ? "bg-green-100" : "bg-red-100";
   };
 
+  const handleNavigation = (path: string) => {
+    console.log("🧭 [HomeAdmin] Navigating to:", path);
+    navigate(path);
+  };
+
   return (
     <div className="h-full text-base-content">
       {/* Header */}
@@ -133,7 +143,7 @@ export const HomeAdmin: React.FC = () => {
         <section id="quick-stats" className="grid grid-cols-2 gap-4 mb-6">
           <Card 
             className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={() => navigate("/gestion/users")}
+            onClick={() => handleNavigation("/gestion/users")}
           >
             <p className="text-sm text-[#666666]">Employés Actifs</p>
             <p className="text-2xl font-bold text-[#333333]">
@@ -142,7 +152,7 @@ export const HomeAdmin: React.FC = () => {
           </Card>
           <Card 
             className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-            onClick={() => navigate("/gestion")}
+            onClick={() => handleNavigation("/gestion")}
           >
             <p className="text-sm text-[#666666]">Chantiers Actifs</p>
             <p className="text-2xl font-bold text-[#333333]">
@@ -155,34 +165,46 @@ export const HomeAdmin: React.FC = () => {
         <section id="admin-actions" className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <h2 className="text-lg font-bold text-[#333333] mb-4">Administration</h2>
           <div className="space-y-3">
-            <Link to="/gestion/users" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
+            <button 
+              onClick={() => handleNavigation("/gestion/users")}
+              className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors"
+            >
               <span className="flex items-center">
                 <Users className="w-5 h-5 mr-3" />
                 Gérer les utilisateurs
               </span>
               <ChevronRight className="w-5 h-5" />
-            </Link>
-            <Link to="/gestion" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
+            </button>
+            <button 
+              onClick={() => handleNavigation("/gestion")}
+              className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors"
+            >
               <span className="flex items-center">
                 <Building className="w-5 h-5 mr-3" />
                 Gérer les chantiers
               </span>
               <ChevronRight className="w-5 h-5" />
-            </Link>
-            <Link to="/rapports" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
+            </button>
+            <button 
+              onClick={() => handleNavigation("/rapports")}
+              className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors"
+            >
               <span className="flex items-center">
                 <FileText className="w-5 h-5 mr-3" />
                 Rapports & Analyses
               </span>
               <ChevronRight className="w-5 h-5" />
-            </Link>
-            <Link to="/calendrier" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
+            </button>
+            <button 
+              onClick={() => handleNavigation("/calendrier")}
+              className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors"
+            >
               <span className="flex items-center">
                 <Clock className="w-5 h-5 mr-3" />
                 Calendrier & Assignations
               </span>
               <ChevronRight className="w-5 h-5" />
-            </Link>
+            </button>
           </div>
         </section>
 
@@ -190,7 +212,12 @@ export const HomeAdmin: React.FC = () => {
         <section id="recent-alerts" className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold text-[#333333]">Alertes Récentes</h2>
-            <Link to="/rapports?tab=alerts" className="text-xs text-[#BD1E28]">Voir tout</Link>
+            <button 
+              onClick={() => handleNavigation("/rapports?tab=alerts")} 
+              className="text-xs text-[#BD1E28] hover:underline"
+            >
+              Voir tout
+            </button>
           </div>
           {alertsLoading ? (
             <div className="space-y-3">

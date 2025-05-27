@@ -4,6 +4,11 @@ import { fr } from "date-fns/locale";
 import { showToast } from "../notifications/toastService";
 import { supabase } from "@/integrations/supabase/client";
 
+// Variable globale pour éviter les checks multiples
+let hasScheduledCheck = false;
+let lastCheckTime = 0;
+const CHECK_COOLDOWN = 60000; // 1 minute de cooldown
+
 /**
  * Checks for unassigned workers for the next week using real Supabase data
  * @returns An array of unassigned worker profiles
@@ -58,7 +63,16 @@ export const checkUnassignedWorkers = async () => {
  * @param sendEmail Whether to also send email notifications
  */
 export const checkAndNotifyUnassignedWorkers = async (sendEmail: boolean = true): Promise<void> => {
+  const now = Date.now();
+  
+  // Éviter les notifications trop fréquentes
+  if (now - lastCheckTime < CHECK_COOLDOWN) {
+    console.log('🔕 [Assignment Check] Cooldown actif, notification ignorée');
+    return;
+  }
+
   try {
+    console.log('🔍 [Assignment Check] Vérification des ouvriers non assignés...');
     const unassignedWorkers = await checkUnassignedWorkers();
     
     if (unassignedWorkers.length > 0) {
@@ -88,6 +102,10 @@ export const checkAndNotifyUnassignedWorkers = async (sendEmail: boolean = true)
         console.log(`[EMAIL] Subject: ${title} - Body: ${message}`);
         sendEmailToAdmins(title, message);
       }
+      
+      lastCheckTime = now; // Mettre à jour le timestamp
+    } else {
+      console.log('✅ [Assignment Check] Tous les ouvriers sont assignés');
     }
   } catch (error) {
     console.error('Erreur lors de la vérification des ouvriers non assignés:', error);
@@ -105,6 +123,15 @@ const sendEmailToAdmins = (subject: string, body: string): void => {
 
 // Schedule the check to run automatically
 export const scheduleUnassignedWorkersCheck = (): void => {
+  // Éviter de programmer plusieurs fois
+  if (hasScheduledCheck) {
+    console.log('⚠️ [Assignment Check] Check déjà programmé');
+    return;
+  }
+
+  console.log('📅 [Assignment Check] Programmation des vérifications automatiques');
+  hasScheduledCheck = true;
+  
   // Check immediately when the app loads
   checkAndNotifyUnassignedWorkers();
   
