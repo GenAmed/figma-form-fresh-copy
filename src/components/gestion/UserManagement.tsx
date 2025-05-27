@@ -5,8 +5,8 @@ import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Pencil, UserPlus, Trash2, Loader2 } from "lucide-react";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { showSuccessToast, showErrorToast } from "@/services/notifications/toastService";
 
 interface UserManagementProps {
   user: User;
@@ -61,7 +61,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
       }
     } catch (error) {
       console.error("❌ Erreur lors du chargement des utilisateurs:", error);
-      toast.error("Erreur lors du chargement des utilisateurs");
+      showErrorToast("Erreur", "Erreur lors du chargement des utilisateurs");
     } finally {
       setLoading(false);
     }
@@ -95,6 +95,15 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
     
     if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${userToDelete?.name}" ?`)) {
       try {
+        console.log("🔍 Vérification de l'authentification actuelle...");
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        console.log("👤 Utilisateur authentifié:", currentUser?.email || "Non authentifié");
+
+        if (!currentUser) {
+          showErrorToast("Erreur d'authentification", "Vous devez être connecté avec Supabase pour supprimer des utilisateurs");
+          return;
+        }
+
         // Étape 1: Vérifier que l'utilisateur existe avant suppression
         console.log("🔍 Vérification de l'existence de l'utilisateur avant suppression...");
         const { data: existingUser, error: checkError } = await supabase
@@ -106,7 +115,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
         if (checkError) {
           console.error("❌ Erreur lors de la vérification:", checkError);
           if (checkError.code === 'PGRST116') {
-            toast.error("L'utilisateur n'existe déjà plus");
+            showErrorToast("Utilisateur introuvable", "L'utilisateur n'existe déjà plus");
             await fetchUsers();
             return;
           }
@@ -126,7 +135,16 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
 
         if (deleteError) {
           console.error("❌ Erreur lors de la suppression:", deleteError);
-          throw deleteError;
+          
+          // Messages d'erreur plus spécifiques
+          if (deleteError.code === '42501') {
+            showErrorToast("Permission refusée", "Vous n'avez pas les droits pour supprimer cet utilisateur. Vérifiez que vous êtes bien connecté en tant qu'admin.");
+          } else if (deleteError.message.includes('row-level security')) {
+            showErrorToast("Sécurité RLS", "Les politiques de sécurité empêchent cette suppression. Contactez l'administrateur système.");
+          } else {
+            showErrorToast("Erreur de suppression", `Erreur: ${deleteError.message}`);
+          }
+          return;
         }
 
         // Étape 3: Vérifier que l'utilisateur a bien été supprimé
@@ -139,10 +157,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
 
         if (verifyError && verifyError.code === 'PGRST116') {
           console.log("✅ Utilisateur bien supprimé de la base de données");
-          toast.success(`Utilisateur "${userToDelete?.name}" supprimé avec succès`);
+          showSuccessToast("Suppression réussie", `Utilisateur "${userToDelete?.name}" supprimé avec succès`);
         } else if (deletedUser) {
           console.error("⚠️ PROBLÈME: L'utilisateur existe encore après suppression!", deletedUser);
-          toast.error("Échec de la suppression - l'utilisateur existe encore");
+          showErrorToast("Échec de la suppression", "L'utilisateur existe encore - les politiques RLS peuvent bloquer la suppression");
           return;
         }
         
@@ -152,7 +170,7 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
         
       } catch (error) {
         console.error("❌ Erreur lors de la suppression de l'utilisateur:", error);
-        toast.error(`Erreur lors de la suppression: ${error.message}`);
+        showErrorToast("Erreur", `Erreur lors de la suppression: ${error.message}`);
       }
     }
   };
