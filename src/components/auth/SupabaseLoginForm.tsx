@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InputField } from "./InputField";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { showSuccessToast, showErrorToast } from "@/services/notifications/toastService";
 
 const loginSchema = z.object({
@@ -18,7 +18,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const SupabaseLoginForm: React.FC = () => {
-  const { signIn } = useSupabaseAuth();
+  const { signIn } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const {
@@ -48,7 +48,7 @@ export const SupabaseLoginForm: React.FC = () => {
       if (result.user && result.session) {
         console.log("✅ [LoginForm] Connexion réussie, redirection gérée par AuthGuard");
         showSuccessToast("Connexion réussie", "Bienvenue !");
-        // Pas de redirection manuelle - le SupabaseAuthGuard s'en charge
+        // La redirection est gérée par SupabaseAuthGuard
       } else {
         console.log("❌ [LoginForm] Pas d'utilisateur ou de session dans le résultat");
         showErrorToast("Échec de connexion", "Une erreur s'est produite");

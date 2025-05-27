@@ -29,9 +29,16 @@ export const useAuth = () => {
           .from("profiles")
           .select("*")
           .eq("id", userId)
-          .maybeSingle();
+          .single();
 
-        if (error) throw error;
+        if (error) {
+          console.error('Error fetching profile:', error);
+          if (mounted) {
+            setError(error.message);
+            setProfile(null);
+          }
+          return;
+        }
         
         if (mounted && data) {
           setProfile({
@@ -43,35 +50,13 @@ export const useAuth = () => {
             phone: data.phone,
             active: data.active !== false
           });
+          setError(null);
         }
       } catch (err: any) {
+        console.error('Exception fetching profile:', err);
         if (mounted) {
-          console.error('Error fetching profile:', err);
-          setError(err.message);
-        }
-      }
-    };
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            await fetchProfile(session.user.id);
-          }
-          setLoading(false);
-        }
-      } catch (err: any) {
-        if (mounted) {
-          console.error('Error getting session:', err);
-          setError(err.message);
-          setLoading(false);
+          setError(err.message || 'Erreur de connexion');
+          setProfile(null);
         }
       }
     };
@@ -96,6 +81,38 @@ export const useAuth = () => {
       }
     );
 
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting initial session:', error);
+          if (mounted) {
+            setError(error.message);
+            setLoading(false);
+          }
+          return;
+        }
+        
+        if (mounted) {
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            await fetchProfile(session.user.id);
+          } else {
+            setLoading(false);
+          }
+        }
+      } catch (err: any) {
+        console.error('Exception getting initial session:', err);
+        if (mounted) {
+          setError(err.message || 'Erreur de connexion');
+          setLoading(false);
+        }
+      }
+    };
+
     getInitialSession();
 
     return () => {
@@ -108,24 +125,33 @@ export const useAuth = () => {
     setLoading(true);
     setError(null);
     
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
-      setError(error.message);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        throw error;
+      }
+      
+      return data;
+    } catch (error) {
       setLoading(false);
       throw error;
     }
-    
-    return data;
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      setError(error.message);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        setError(error.message);
+        throw error;
+      }
+    } catch (error) {
       throw error;
     }
   };

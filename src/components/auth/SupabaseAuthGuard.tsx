@@ -27,6 +27,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     // Public route (login page)
     if (!requireAuth) {
       if (user && currentPath === "/") {
+        console.log('User logged in, redirecting to /home');
         navigate("/home", { replace: true });
       }
       return;
@@ -35,6 +36,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     // Protected routes
     if (!user) {
       if (currentPath !== "/") {
+        console.log('No user, redirecting to login');
         navigate("/", { replace: true });
       }
       return;
@@ -42,6 +44,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
 
     // Role-based access
     if (requireRole && profile && profile.role !== requireRole) {
+      console.log('User role mismatch, redirecting to /home');
       navigate("/home", { replace: true });
       return;
     }

@@ -39,7 +39,8 @@ const Home: React.FC = () => {
     );
   }
 
-  const userForComponents = {
+  // Convert profile to the format expected by HomeWorker
+  const userForWorker = {
     id: profile.id,
     email: profile.email,
     name: profile.name,
@@ -50,7 +51,7 @@ const Home: React.FC = () => {
 
   return profile.role === "admin" ? 
     <HomeAdmin profile={profile} /> : 
-    <HomeWorker user={userForComponents} />;
+    <HomeWorker user={userForWorker} />;
 };
 
 export default Home;
