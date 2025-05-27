@@ -1,8 +1,8 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getCurrentUser } from "@/lib/auth";
-import { sessionService } from "@/services/sessionService";
+import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -21,58 +21,98 @@ export const AuthGuard: React.FC<AuthGuardProps> = ({
 }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { user, loading: authLoading } = useSupabaseAuth();
+  const { profile, loading: profileLoading } = useSupabaseProfile();
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
-    const checkAuth = () => {
-      const user = getCurrentUser();
-      
-      // Si l'authentification n'est pas requise, autoriser l'accès
-      if (!requireAuth) {
-        setIsAuthorized(true);
-        setIsLoading(false);
-        return;
-      }
+    console.log("🔍 [AuthGuard] État actuel:", {
+      authLoading,
+      profileLoading,
+      hasUser: !!user,
+      userEmail: user?.email,
+      requireAuth,
+      requireRole,
+      hasProfile: !!profile,
+      userRole: profile?.role,
+      currentPath: location.pathname,
+      isReady
+    });
 
-      // Vérifier si l'utilisateur est connecté
-      if (!user) {
-        console.log("AuthGuard: Utilisateur non connecté, redirection vers /");
-        navigate("/", { replace: true });
-        setIsLoading(false);
-        return;
-      }
+    // Si l'authentification est en cours, attendre
+    if (authLoading) {
+      console.log("🔄 [AuthGuard] Auth en cours de chargement...");
+      setIsReady(false);
+      return;
+    }
 
-      // Vérifier le rôle si requis
-      if (requireRole && user.role !== requireRole) {
-        console.log(`AuthGuard: Accès refusé - rôle requis: ${requireRole}, rôle utilisateur: ${user.role}`);
+    // Route publique (page de connexion)
+    if (!requireAuth) {
+      // Si utilisateur connecté sur page de connexion, rediriger
+      if (user && location.pathname === "/") {
+        console.log("🔄 [AuthGuard] Redirection utilisateur connecté vers /home");
         navigate("/home", { replace: true });
-        setIsLoading(false);
+        return;
+      }
+      console.log("✅ [AuthGuard] Route publique autorisée");
+      setIsReady(true);
+      return;
+    }
+
+    // Routes protégées - vérifier l'authentification
+    if (!user) {
+      console.log("🔒 [AuthGuard] Pas d'utilisateur, redirection vers /");
+      navigate("/", { replace: true });
+      setIsReady(false);
+      return;
+    }
+
+    // Si un rôle est requis
+    if (requireRole) {
+      // Attendre le chargement du profil
+      if (profileLoading) {
+        console.log("🔄 [AuthGuard] Chargement du profil...");
+        setIsReady(false);
         return;
       }
 
-      // Démarrer la surveillance de session
-      sessionService.startSessionMonitoring();
-      
-      setIsAuthorized(true);
-      setIsLoading(false);
-    };
+      // Vérifier si le profil existe
+      if (!profile) {
+        console.log("❌ [AuthGuard] Profil non trouvé, redirection vers /home");
+        navigate("/home", { replace: true });
+        setIsReady(false);
+        return;
+      }
 
-    checkAuth();
-  }, [navigate, location.pathname, requireAuth, requireRole]);
+      // Vérifier le rôle
+      if (profile.role !== requireRole) {
+        console.log(`🔒 [AuthGuard] Rôle incorrect: requis=${requireRole}, actuel=${profile.role}`);
+        navigate("/home", { replace: true });
+        setIsReady(false);
+        return;
+      }
+    }
 
-  // Affichage de chargement
-  if (isLoading) {
+    console.log("✅ [AuthGuard] Accès autorisé");
+    setIsReady(true);
+  }, [navigate, location.pathname, requireAuth, requireRole, user, authLoading, profile, profileLoading]);
+
+  // Écran de chargement
+  if (authLoading || (requireRole && profileLoading) || !isReady) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
-          <p className="text-gray-600">Vérification de l'authentification...</p>
+          <p className="text-gray-600">
+            {authLoading ? "Vérification de l'authentification..." : 
+             profileLoading ? "Chargement du profil..." :
+             "Préparation..."}
+          </p>
         </div>
       </div>
     );
   }
 
-  // Afficher le contenu si autorisé
-  return isAuthorized ? <>{children}</> : null;
+  // Afficher le contenu
+  return <>{children}</>;
 };
