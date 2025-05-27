@@ -2,15 +2,11 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
-import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Pencil, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccessToast, showErrorToast } from "@/services/notifications/toastService";
-
-interface UserManagementProps {
-  user: User;
-}
+import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 
 type UserData = {
   id: string;
@@ -21,10 +17,11 @@ type UserData = {
   phone?: string;
 };
 
-export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
+export const UserManagement: React.FC = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
+  const { profile: currentUserProfile } = useSupabaseProfile();
 
   // Charger les utilisateurs depuis Supabase
   useEffect(() => {
@@ -101,6 +98,12 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
 
         if (!currentUser) {
           showErrorToast("Erreur d'authentification", "Vous devez être connecté avec Supabase pour supprimer des utilisateurs");
+          return;
+        }
+
+        // Vérifier que l'utilisateur actuel est admin
+        if (!currentUserProfile || currentUserProfile.role !== 'admin') {
+          showErrorToast("Permission refusée", "Seuls les administrateurs peuvent supprimer des utilisateurs");
           return;
         }
 

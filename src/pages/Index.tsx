@@ -1,11 +1,11 @@
 
 import React from "react";
-import { LoginPage } from "@/components/auth/LoginPage";
+import { SupabaseLoginPage } from "@/components/auth/SupabaseLoginPage";
 
 const Index: React.FC = () => {
   return (
     <div className="w-full min-h-screen">
-      <LoginPage />
+      <SupabaseLoginPage />
     </div>
   );
 };
