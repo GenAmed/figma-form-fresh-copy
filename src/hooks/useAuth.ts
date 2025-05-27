@@ -22,8 +22,12 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
+    let profileFetched = false;
 
     const fetchProfile = async (userId: string) => {
+      if (profileFetched) return;
+      profileFetched = true;
+
       try {
         const { data, error } = await supabase
           .from("profiles")
@@ -63,21 +67,23 @@ export const useAuth = () => {
 
     // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         
-        if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          setError(null);
-          
-          if (session?.user) {
-            await fetchProfile(session.user.id);
-          } else {
-            setProfile(null);
-          }
-          setLoading(false);
+        if (!mounted) return;
+        
+        setSession(session);
+        setUser(session?.user ?? null);
+        setError(null);
+        
+        if (session?.user && !profileFetched) {
+          fetchProfile(session.user.id);
+        } else if (!session?.user) {
+          setProfile(null);
+          profileFetched = false;
         }
+        
+        setLoading(false);
       }
     );
 
@@ -98,11 +104,10 @@ export const useAuth = () => {
           setSession(session);
           setUser(session?.user ?? null);
           
-          if (session?.user) {
+          if (session?.user && !profileFetched) {
             await fetchProfile(session.user.id);
-          } else {
-            setLoading(false);
           }
+          setLoading(false);
         }
       } catch (err: any) {
         console.error('Exception getting initial session:', err);
