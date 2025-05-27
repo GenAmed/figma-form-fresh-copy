@@ -1,11 +1,12 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { Card } from "@/components/ui/card";
 import { Building, Pencil, Plus, Trash2, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { getWorksites, deleteWorksite } from "@/services/worksiteService";
 
 type Worksite = {
   id: string;
@@ -22,7 +23,6 @@ export const WorksiteManagement: React.FC = () => {
   const [worksites, setWorksites] = useState<Worksite[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Charger les chantiers depuis notre Edge Function
   useEffect(() => {
     fetchWorksites();
   }, []);
@@ -31,28 +31,18 @@ export const WorksiteManagement: React.FC = () => {
     try {
       setLoading(true);
       
-      console.log("Tentative de récupération des chantiers via l'Edge Function");
+      const data = await getWorksites();
       
-      // Utiliser l'Edge Function pour récupérer les chantiers
-      const { data, error } = await supabase.functions.invoke("get-worksites");
+      const formattedData: Worksite[] = data.map(worksite => ({
+        id: worksite.id,
+        name: worksite.name,
+        address: worksite.address,
+        startDate: worksite.start_date ? new Date(worksite.start_date).toLocaleDateString() : "",
+        endDate: worksite.end_date ? new Date(worksite.end_date).toLocaleDateString() : "",
+        status: worksite.status as "active" | "pending" | "completed"
+      }));
       
-      if (error) {
-        throw error;
-      }
-
-      console.log("Réponse de l'Edge Function:", data);
-
-      if (data && data.data) {
-        const formattedData: Worksite[] = data.data.map(worksite => ({
-          id: worksite.id,
-          name: worksite.name,
-          address: worksite.address,
-          startDate: worksite.start_date ? new Date(worksite.start_date).toLocaleDateString() : "",
-          endDate: worksite.end_date ? new Date(worksite.end_date).toLocaleDateString() : "",
-          status: worksite.status as "active" | "pending" | "completed"
-        }));
-        setWorksites(formattedData);
-      }
+      setWorksites(formattedData);
     } catch (error) {
       console.error("Erreur lors du chargement des chantiers:", error);
       toast.error("Erreur lors du chargement des chantiers");
@@ -88,22 +78,8 @@ export const WorksiteManagement: React.FC = () => {
     
     if (confirm("Êtes-vous sûr de vouloir supprimer ce chantier ?")) {
       try {
-        console.log("Tentative de suppression du chantier:", id);
-        
-        const { error } = await supabase
-          .from("worksites")
-          .delete()
-          .eq("id", id);
-
-        if (error) {
-          console.error("Erreur lors de la suppression:", error);
-          throw error;
-        }
-
-        console.log("Chantier supprimé avec succès");
+        await deleteWorksite(id);
         toast.success("Chantier supprimé avec succès");
-        
-        // Recharger la liste complète pour assurer la cohérence
         await fetchWorksites();
       } catch (error) {
         console.error("Erreur lors de la suppression du chantier:", error);

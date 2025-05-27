@@ -17,12 +17,14 @@ export const useSupabaseProfile = () => {
   const { user } = useSupabaseAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) {
         setProfile(null);
         setLoading(false);
+        setError(null);
         return;
       }
 
@@ -37,6 +39,7 @@ export const useSupabaseProfile = () => {
 
         if (error) {
           console.error("❌ Erreur lors de la récupération du profil:", error);
+          setError(error.message);
           setProfile(null);
         } else {
           console.log("✅ Profil récupéré:", data);
@@ -51,9 +54,11 @@ export const useSupabaseProfile = () => {
             active: data.active
           };
           setProfile(profileData);
+          setError(null);
         }
       } catch (error) {
         console.error("❌ Erreur lors de la récupération du profil:", error);
+        setError(error.message);
         setProfile(null);
       } finally {
         setLoading(false);
@@ -66,6 +71,7 @@ export const useSupabaseProfile = () => {
   return {
     profile,
     loading,
+    error,
     user,
   };
 };
