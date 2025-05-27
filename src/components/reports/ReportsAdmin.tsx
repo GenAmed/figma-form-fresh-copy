@@ -39,7 +39,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
     handleDeleteReport,
     mockChantiers,
     mockEmployes
-  } = useReports();
+  } = useReports([], []);
 
   // Utiliser les hooks pour récupérer les données réelles
   const { data: reportsData, loading: reportsLoading } = useReportsData(dateRange);

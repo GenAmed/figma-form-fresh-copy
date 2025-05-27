@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { mockChantiers, mockEmployes } from "@/components/reports/mock/mockData";
+import { ExportFormat } from "@/services/export/types";
 
 export const useReports = () => {
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
@@ -11,7 +12,7 @@ export const useReports = () => {
 
   const [selectedChantiers, setSelectedChantiers] = useState<string[]>([]);
   const [selectedEmployes, setSelectedEmployes] = useState<string[]>([]);
-  const [exportFormat, setExportFormat] = useState("pdf");
+  const [exportFormat, setExportFormat] = useState<ExportFormat>("pdf");
   const [showFilters, setShowFilters] = useState(false);
   const [exportInProgress, setExportInProgress] = useState(false);
   const [alertStatuses, setAlertStatuses] = useState<Record<number, string>>({});
@@ -35,7 +36,7 @@ export const useReports = () => {
     );
   };
 
-  const handleExport = async () => {
+  const handleExport = async (): Promise<void> => {
     setExportInProgress(true);
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));

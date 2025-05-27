@@ -6,6 +6,7 @@ import { AlertsTab } from "./alerts/AlertsTab";
 import { ExportTab } from "./export/ExportTab";
 import { ReportData } from "@/hooks/useReportsData";
 import { Alert } from "@/hooks/useAlertsData";
+import { ExportFormat } from "@/services/export/types";
 
 interface ReportsTabsProps {
   data: ReportData;
@@ -16,10 +17,10 @@ interface ReportsTabsProps {
   setShowAllAlerts: (show: boolean) => void;
   alertStatuses: Record<number, string>;
   handleAlertStatusChange: (alertId: number, status: string) => void;
-  exportFormat: string;
-  setExportFormat: (format: string) => void;
+  exportFormat: ExportFormat;
+  setExportFormat: (format: ExportFormat) => void;
   exportInProgress: boolean;
-  handleExport: () => void;
+  handleExport: () => Promise<void>;
   handlePrintReport: () => void;
   customReportName: string;
   setCustomReportName: (name: string) => void;
@@ -78,11 +79,6 @@ export const ReportsTabs: React.FC<ReportsTabsProps> = ({
           exportInProgress={exportInProgress}
           handleExport={handleExport}
           handlePrintReport={handlePrintReport}
-          customReportName={customReportName}
-          setCustomReportName={setCustomReportName}
-          savedReports={savedReports}
-          handleSaveReport={handleSaveReport}
-          handleDeleteReport={handleDeleteReport}
         />
       </TabsContent>
     </Tabs>
