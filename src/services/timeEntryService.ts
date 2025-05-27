@@ -34,6 +34,7 @@ export interface TimeEntry {
 
 export const createTimeEntry = async (entry: Omit<TimeEntry, 'id' | 'created_at' | 'updated_at'>): Promise<TimeEntry> => {
   try {
+    // Utiliser la méthode générique .from() qui accepte n'importe quelle chaîne
     const { data, error } = await supabase
       .from('time_entries')
       .insert({
@@ -54,7 +55,8 @@ export const createTimeEntry = async (entry: Omit<TimeEntry, 'id' | 'created_at'
       throw error;
     }
 
-    return data;
+    // Cast explicite pour résoudre les problèmes de type
+    return data as unknown as TimeEntry;
   } catch (error) {
     console.error('Erreur lors de la création du pointage:', error);
     throw error;
@@ -75,7 +77,7 @@ export const updateTimeEntry = async (id: string, updates: Partial<TimeEntry>): 
       throw error;
     }
 
-    return data;
+    return data as unknown as TimeEntry;
   } catch (error) {
     console.error('Erreur lors de la mise à jour du pointage:', error);
     throw error;
@@ -97,7 +99,7 @@ export const getActiveTimeEntry = async (userId: string, date: string): Promise<
       return null;
     }
 
-    return data;
+    return data as unknown as TimeEntry | null;
   } catch (error) {
     console.error('Erreur lors de la récupération du pointage actif:', error);
     return null;
@@ -126,7 +128,7 @@ export const getUserTimeEntries = async (userId: string, startDate?: string, end
       throw error;
     }
 
-    return data || [];
+    return data as unknown as TimeEntry[];
   } catch (error) {
     console.error('Erreur lors de la récupération des pointages:', error);
     throw error;
