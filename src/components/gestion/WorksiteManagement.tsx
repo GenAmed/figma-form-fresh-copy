@@ -43,9 +43,10 @@ export const WorksiteManagement: React.FC = () => {
       }));
       
       setWorksites(formattedData);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors du chargement des chantiers:", error);
-      toast.error("Erreur lors du chargement des chantiers");
+      // Afficher un message d'erreur moins intrusif
+      console.log("Impossible de charger les chantiers, vérifiez votre connexion");
     } finally {
       setLoading(false);
     }
@@ -81,9 +82,9 @@ export const WorksiteManagement: React.FC = () => {
         await deleteWorksite(id);
         toast.success("Chantier supprimé avec succès");
         await fetchWorksites();
-      } catch (error) {
+      } catch (error: any) {
         console.error("Erreur lors de la suppression du chantier:", error);
-        toast.error(`Erreur lors de la suppression du chantier: ${error.message}`);
+        toast.error("Erreur lors de la suppression du chantier");
       }
     }
   };

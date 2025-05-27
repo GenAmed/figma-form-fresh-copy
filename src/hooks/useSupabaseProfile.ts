@@ -35,13 +35,13 @@ export const useSupabaseProfile = () => {
           .from("profiles")
           .select("*")
           .eq("id", user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("❌ Erreur lors de la récupération du profil:", error);
           setError(error.message);
           setProfile(null);
-        } else {
+        } else if (data) {
           console.log("✅ Profil récupéré:", data);
           // Conversion sûre du type role
           const profileData: UserProfile = {
@@ -55,10 +55,14 @@ export const useSupabaseProfile = () => {
           };
           setProfile(profileData);
           setError(null);
+        } else {
+          console.log("ℹ️ Aucun profil trouvé pour cet utilisateur");
+          setProfile(null);
+          setError("Profil utilisateur non trouvé");
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("❌ Erreur lors de la récupération du profil:", error);
-        setError(error.message);
+        setError(error.message || "Erreur inconnue");
         setProfile(null);
       } finally {
         setLoading(false);

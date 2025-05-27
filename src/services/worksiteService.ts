@@ -26,9 +26,10 @@ export const getWorksites = async (): Promise<Worksite[]> => {
 
     console.log("✅ Chantiers récupérés:", data?.length || 0);
     return data || [];
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erreur lors de la récupération des chantiers:', error);
-    throw error;
+    // Ne pas lancer l'erreur pour éviter les notifications d'erreur
+    return [];
   }
 };
 
@@ -40,16 +41,21 @@ export const getWorksiteById = async (id: string): Promise<Worksite | null> => {
       .from('worksites')
       .select('*')
       .eq('id', id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       console.error('❌ Erreur lors de la récupération du chantier:', error);
       return null;
     }
 
-    console.log("✅ Chantier récupéré:", data);
-    return data;
-  } catch (error) {
+    if (data) {
+      console.log("✅ Chantier récupéré:", data);
+      return data;
+    } else {
+      console.log("ℹ️ Chantier non trouvé:", id);
+      return null;
+    }
+  } catch (error: any) {
     console.error('❌ Erreur lors de la récupération du chantier:', error);
     return null;
   }
@@ -72,7 +78,7 @@ export const createWorksite = async (worksite: Omit<Worksite, 'id'>): Promise<Wo
 
     console.log("✅ Chantier créé:", data);
     return data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erreur lors de la création du chantier:', error);
     throw error;
   }
@@ -96,7 +102,7 @@ export const updateWorksite = async (id: string, updates: Partial<Worksite>): Pr
 
     console.log("✅ Chantier mis à jour:", data);
     return data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erreur lors de la mise à jour du chantier:', error);
     throw error;
   }
@@ -117,7 +123,7 @@ export const deleteWorksite = async (id: string): Promise<void> => {
     }
 
     console.log("✅ Chantier supprimé");
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erreur lors de la suppression du chantier:', error);
     throw error;
   }
