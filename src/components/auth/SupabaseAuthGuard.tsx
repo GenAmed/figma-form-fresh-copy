@@ -54,8 +54,8 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   }, [user]);
 
   useEffect(() => {
-    if (loading || profileLoading) {
-      console.log("🔄 [AuthGuard] En cours de chargement...", { loading, profileLoading });
+    if (loading) {
+      console.log("🔄 [AuthGuard] Auth en cours de chargement...");
       return;
     }
 
@@ -86,6 +86,12 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
       return;
     }
 
+    // Si on a besoin du profil et qu'il n'est pas encore chargé, attendre
+    if (requireRole && profileLoading) {
+      console.log("🔄 [AuthGuard] Profile en cours de chargement...");
+      return;
+    }
+
     // Vérifier le rôle si requis
     if (requireRole && userProfile && userProfile.role !== requireRole) {
       console.log(`🔒 [AuthGuard] Accès refusé - rôle requis: ${requireRole}, rôle utilisateur: ${userProfile.role}`);
@@ -96,8 +102,8 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     console.log("✅ [AuthGuard] Accès autorisé");
   }, [navigate, location.pathname, requireAuth, requireRole, user, loading, userProfile, profileLoading]);
 
-  // Affichage de chargement
-  if (loading || profileLoading) {
+  // Affichage de chargement pendant l'authentification
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
         <div className="text-center">
@@ -108,13 +114,13 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     );
   }
 
-  // Ne pas afficher le contenu si on est en train de rediriger
-  if (user && location.pathname === "/" && !requireAuth) {
+  // Affichage de chargement pendant la récupération du profil (seulement si un rôle est requis)
+  if (requireRole && profileLoading) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
-          <p className="text-gray-600">Redirection en cours...</p>
+          <p className="text-gray-600">Chargement du profil...</p>
         </div>
       </div>
     );
