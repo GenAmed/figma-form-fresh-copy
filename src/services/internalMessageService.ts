@@ -70,7 +70,12 @@ export const getAllMessages = async (): Promise<InternalMessage[]> => {
       return [];
     }
 
-    return data || [];
+    // Type assertion pour assurer la compatibilité avec notre interface
+    return (data || []).map(item => ({
+      ...item,
+      priority: item.priority as "low" | "normal" | "high" | "urgent",
+      status: item.status as "new" | "read" | "in_progress" | "resolved"
+    }));
   } catch (error) {
     console.error("Erreur lors de la récupération des messages:", error);
     return [];
@@ -99,7 +104,12 @@ export const getUserMessages = async (): Promise<InternalMessage[]> => {
       return [];
     }
 
-    return data || [];
+    // Type assertion pour assurer la compatibilité avec notre interface
+    return (data || []).map(item => ({
+      ...item,
+      priority: item.priority as "low" | "normal" | "high" | "urgent",
+      status: item.status as "new" | "read" | "in_progress" | "resolved"
+    }));
   } catch (error) {
     console.error("Erreur lors de la récupération des messages utilisateur:", error);
     return [];
