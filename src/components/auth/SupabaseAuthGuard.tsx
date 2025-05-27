@@ -21,15 +21,16 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   const [userProfile, setUserProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
 
   // Fonction pour récupérer le profil utilisateur
   useEffect(() => {
     let mounted = true;
 
     const fetchUserProfile = async () => {
-      // Ne récupérer le profil que si un rôle est requis
-      if (!requireRole || !user) {
-        if (mounted) {
+      // Ne récupérer le profil que si un rôle est requis et qu'on ne l'a pas déjà vérifié
+      if (!requireRole || !user || hasCheckedProfile) {
+        if (mounted && !requireRole) {
           setUserProfile(null);
           setProfileLoading(false);
         }
@@ -55,9 +56,14 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
           console.log("✅ [AuthGuard] Profil récupéré:", profile);
           setUserProfile(profile);
         }
+        
+        setHasCheckedProfile(true);
       } catch (error) {
         console.error("❌ [AuthGuard] Exception profil:", error);
-        if (mounted) setUserProfile(null);
+        if (mounted) {
+          setUserProfile(null);
+          setHasCheckedProfile(true);
+        }
       } finally {
         if (mounted) setProfileLoading(false);
       }
@@ -68,7 +74,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     return () => {
       mounted = false;
     };
-  }, [user, requireRole]);
+  }, [user, requireRole, hasCheckedProfile]);
 
   // Logique principale de navigation
   useEffect(() => {
@@ -82,7 +88,8 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
       hasProfile: !!userProfile,
       userRole: userProfile?.role,
       currentPath: location.pathname,
-      isReady
+      isReady,
+      hasCheckedProfile
     });
 
     // Attendre que l'auth soit chargée
@@ -116,7 +123,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     // Si un rôle est requis
     if (requireRole) {
       // Attendre le chargement du profil
-      if (profileLoading) {
+      if (profileLoading || !hasCheckedProfile) {
         console.log("🔄 [AuthGuard] Chargement du profil...");
         setIsReady(false);
         return;
@@ -124,8 +131,9 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
 
       // Vérifier si le profil existe
       if (!userProfile) {
-        console.log("❌ [AuthGuard] Profil non trouvé, redirection vers /");
-        navigate("/", { replace: true });
+        console.log("❌ [AuthGuard] Profil non trouvé, redirection vers /home");
+        // Rediriger vers /home au lieu de / pour éviter la boucle
+        navigate("/home", { replace: true });
         setIsReady(false);
         return;
       }
@@ -141,10 +149,10 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
 
     console.log("✅ [AuthGuard] Accès autorisé");
     setIsReady(true);
-  }, [navigate, location.pathname, requireAuth, requireRole, user, loading, userProfile, profileLoading]);
+  }, [navigate, location.pathname, requireAuth, requireRole, user, loading, userProfile, profileLoading, hasCheckedProfile]);
 
   // Écran de chargement
-  if (loading || (requireRole && profileLoading) || !isReady) {
+  if (loading || (requireRole && (profileLoading || !hasCheckedProfile)) || !isReady) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
         <div className="text-center">
