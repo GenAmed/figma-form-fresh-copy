@@ -79,23 +79,31 @@ export const useAdminCalendar = () => {
     }
   };
 
+  // Load unassigned workers
+  const loadUnassignedWorkers = async () => {
+    try {
+      const unassignedList = await checkUnassignedWorkers();
+      setUnassignedWorkers(unassignedList);
+      
+      if (unassignedList.length > 0) {
+        const workerNames = unassignedList.map(w => w.name).join(", ");
+        showToast(
+          `${unassignedList.length} ouvrier(s) non assigné(s)`, 
+          `Ouvriers sans assignation: ${workerNames}`,
+          "warning",
+          5000,
+          "/gestion/users"
+        );
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des ouvriers non assignés:', error);
+    }
+  };
+
   // Load data on startup
   useEffect(() => {
     loadAssignments();
-    
-    const unassignedList = checkUnassignedWorkers();
-    setUnassignedWorkers(unassignedList);
-    
-    if (unassignedList.length > 0) {
-      const workerNames = unassignedList.map(w => w.name).join(", ");
-      showToast(
-        `${unassignedList.length} ouvrier(s) non assigné(s)`, 
-        `Ouvriers sans assignation: ${workerNames}`,
-        "warning",
-        5000,
-        "/gestion/users"
-      );
-    }
+    loadUnassignedWorkers();
   }, []);
 
   const handlePreviousMonth = () => {
