@@ -1,15 +1,39 @@
-import React from "react";
+
+import React, { useState } from "react";
 import { User } from "@/lib/auth";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Settings } from "lucide-react";
+import { clearCurrentUser } from "@/lib/auth";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { ChangePasswordDialog } from "./ChangePasswordDialog";
 
 interface UserProfileProps {
   user: User;
 }
 
 export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
+  const navigate = useNavigate();
+  const [showChangePassword, setShowChangePassword] = useState(false);
+
+  const handleLogout = () => {
+    clearCurrentUser();
+    toast.success("Déconnexion réussie", {
+      description: "À bientôt !",
+      duration: 2000,
+    });
+    setTimeout(() => {
+      navigate("/");
+    }, 1000);
+  };
+
+  const handleChangePassword = () => {
+    setShowChangePassword(true);
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F8F8] pb-16">
       {/* Header */}
@@ -111,14 +135,32 @@ export const UserProfile: React.FC<UserProfileProps> = ({ user }) => {
 
           {/* Settings Buttons */}
           <div className="space-y-3">
-            <Button variant="outline" className="w-full">Changer mon mot de passe</Button>
-            <Button variant="outline" className="w-full text-red-600 hover:text-red-700 hover:bg-red-50">Se déconnecter</Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={handleChangePassword}
+            >
+              Changer mon mot de passe
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              Se déconnecter
+            </Button>
           </div>
         </div>
       </main>
 
       {/* Bottom Navigation */}
       <BottomNavigation activeTab="home" />
+
+      {/* Change Password Dialog */}
+      <ChangePasswordDialog 
+        open={showChangePassword}
+        onOpenChange={setShowChangePassword}
+      />
     </div>
   );
 };
