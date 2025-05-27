@@ -34,15 +34,18 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      console.log("Chargement des utilisateurs depuis Supabase");
+      console.log("🔄 Chargement des utilisateurs depuis Supabase");
       
       const { data, error } = await supabase
         .from("profiles")
         .select("*");
 
       if (error) {
+        console.error("❌ Erreur lors de la requête:", error);
         throw error;
       }
+
+      console.log("📊 Données brutes reçues:", data);
 
       if (data) {
         const formattedData: UserData[] = data.map(profile => ({
@@ -54,10 +57,10 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
           phone: profile.phone
         }));
         setUsers(formattedData);
-        console.log(`${formattedData.length} utilisateurs chargés`);
+        console.log(`✅ ${formattedData.length} utilisateurs chargés:`, formattedData.map(u => ({id: u.id, name: u.name})));
       }
     } catch (error) {
-      console.error("Erreur lors du chargement des utilisateurs:", error);
+      console.error("❌ Erreur lors du chargement des utilisateurs:", error);
       toast.error("Erreur lors du chargement des utilisateurs");
     } finally {
       setLoading(false);
@@ -87,28 +90,69 @@ export const UserManagement: React.FC<UserManagementProps> = ({ user }) => {
   const handleDelete = async (id: string, event: React.MouseEvent) => {
     event.stopPropagation();
     
-    if (confirm("Êtes-vous sûr de vouloir supprimer cet utilisateur ?")) {
+    const userToDelete = users.find(u => u.id === id);
+    console.log("🗑️ Tentative de suppression de l'utilisateur:", { id, name: userToDelete?.name });
+    
+    if (confirm(`Êtes-vous sûr de vouloir supprimer l'utilisateur "${userToDelete?.name}" ?`)) {
       try {
-        console.log("Tentative de suppression de l'utilisateur:", id);
-        
-        const { error } = await supabase
+        // Étape 1: Vérifier que l'utilisateur existe avant suppression
+        console.log("🔍 Vérification de l'existence de l'utilisateur avant suppression...");
+        const { data: existingUser, error: checkError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (checkError) {
+          console.error("❌ Erreur lors de la vérification:", checkError);
+          if (checkError.code === 'PGRST116') {
+            toast.error("L'utilisateur n'existe déjà plus");
+            await fetchUsers();
+            return;
+          }
+          throw checkError;
+        }
+
+        console.log("✅ Utilisateur trouvé avant suppression:", existingUser);
+
+        // Étape 2: Effectuer la suppression
+        console.log("🗑️ Exécution de la suppression...");
+        const { error: deleteError, data: deleteData } = await supabase
           .from("profiles")
           .delete()
           .eq("id", id);
 
-        if (error) {
-          console.error("Erreur lors de la suppression:", error);
-          throw error;
+        console.log("📤 Résultat de la suppression:", { error: deleteError, data: deleteData });
+
+        if (deleteError) {
+          console.error("❌ Erreur lors de la suppression:", deleteError);
+          throw deleteError;
         }
 
-        console.log("Utilisateur supprimé avec succès");
-        toast.success("Utilisateur supprimé avec succès");
+        // Étape 3: Vérifier que l'utilisateur a bien été supprimé
+        console.log("🔍 Vérification de la suppression...");
+        const { data: deletedUser, error: verifyError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", id)
+          .single();
+
+        if (verifyError && verifyError.code === 'PGRST116') {
+          console.log("✅ Utilisateur bien supprimé de la base de données");
+          toast.success(`Utilisateur "${userToDelete?.name}" supprimé avec succès`);
+        } else if (deletedUser) {
+          console.error("⚠️ PROBLÈME: L'utilisateur existe encore après suppression!", deletedUser);
+          toast.error("Échec de la suppression - l'utilisateur existe encore");
+          return;
+        }
         
-        // Recharger la liste pour assurer la cohérence
+        // Étape 4: Recharger la liste pour assurer la cohérence
+        console.log("🔄 Rechargement de la liste...");
         await fetchUsers();
+        
       } catch (error) {
-        console.error("Erreur lors de la suppression de l'utilisateur:", error);
-        toast.error(`Erreur lors de la suppression de l'utilisateur: ${error.message}`);
+        console.error("❌ Erreur lors de la suppression de l'utilisateur:", error);
+        toast.error(`Erreur lors de la suppression: ${error.message}`);
       }
     }
   };
