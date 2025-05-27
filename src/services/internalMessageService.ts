@@ -16,6 +16,29 @@ export interface InternalMessage {
 }
 
 /**
+ * Valider si une chaîne est un UUID valide
+ */
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+/**
+ * Générer un UUID temporaire pour les utilisateurs avec des IDs non-UUID
+ */
+const generateTempUUID = (userId: string): string => {
+  // Créer un UUID déterministe basé sur l'ID utilisateur
+  const hash = userId.split('').reduce((a, b) => {
+    a = ((a << 5) - a) + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  
+  // Convertir en UUID format (simple mais déterministe)
+  const hex = Math.abs(hash).toString(16).padStart(8, '0');
+  return `${hex.slice(0, 8)}-${hex.slice(0, 4)}-4${hex.slice(1, 4)}-8${hex.slice(0, 3)}-${hex.slice(0, 12).padEnd(12, '0')}`;
+};
+
+/**
  * Envoyer un message interne
  */
 export const sendInternalMessage = async (
@@ -30,11 +53,18 @@ export const sendInternalMessage = async (
     return false;
   }
 
+  // Vérifier et ajuster l'ID utilisateur si nécessaire
+  let senderId = user.id;
+  if (!isValidUUID(senderId)) {
+    console.warn(`ID utilisateur "${senderId}" n'est pas un UUID valide, génération d'un UUID temporaire`);
+    senderId = generateTempUUID(senderId);
+  }
+
   try {
     const { error } = await supabase
       .from('internal_messages')
       .insert({
-        sender_id: user.id,
+        sender_id: senderId,
         sender_name: user.name,
         sender_email: user.email,
         subject,
@@ -48,6 +78,7 @@ export const sendInternalMessage = async (
       return false;
     }
 
+    console.log("Message envoyé avec succès");
     return true;
   } catch (error) {
     console.error("Erreur lors de l'envoi du message:", error);
@@ -92,11 +123,17 @@ export const getUserMessages = async (): Promise<InternalMessage[]> => {
     return [];
   }
 
+  // Vérifier et ajuster l'ID utilisateur si nécessaire
+  let senderId = user.id;
+  if (!isValidUUID(senderId)) {
+    senderId = generateTempUUID(senderId);
+  }
+
   try {
     const { data, error } = await supabase
       .from('internal_messages')
       .select('*')
-      .eq('sender_id', user.id)
+      .eq('sender_id', senderId)
       .order('created_at', { ascending: false });
 
     if (error) {

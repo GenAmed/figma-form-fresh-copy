@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { AlertTriangle, Send } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/integrations/supabase/client";
+import { sendInternalMessage } from "@/services/internalMessageService";
 
 interface ReportIssueDialogProps {
   children: React.ReactNode;
@@ -41,32 +41,31 @@ export const ReportIssueDialog: React.FC<ReportIssueDialogProps> = ({ children }
     setLoading(true);
     
     try {
-      const { error } = await supabase
-        .from('internal_messages')
-        .insert({
-          sender_id: user.id,
-          sender_name: user.name,
-          sender_email: user.email,
-          subject: formData.subject,
-          content: formData.description,
-          priority: formData.priority,
-          status: 'new'
-        });
+      console.log("Envoi du signalement:", {
+        subject: formData.subject,
+        content: formData.description,
+        priority: formData.priority,
+        user: user
+      });
 
-      if (error) {
-        console.error("Erreur lors de l'envoi du signalement:", error);
+      const success = await sendInternalMessage(
+        formData.subject,
+        formData.description,
+        formData.priority
+      );
+
+      if (success) {
+        toast.success("Signalement envoyé", {
+          description: "Votre signalement a été transmis à l'administration"
+        });
+        
+        setFormData({ subject: "", description: "", priority: "normal" });
+        setOpen(false);
+      } else {
         toast.error("Erreur lors de l'envoi", {
           description: "Impossible d'envoyer le signalement. Veuillez réessayer."
         });
-        return;
       }
-
-      toast.success("Signalement envoyé", {
-        description: "Votre signalement a été transmis à l'administration"
-      });
-      
-      setFormData({ subject: "", description: "", priority: "normal" });
-      setOpen(false);
     } catch (error) {
       console.error("Erreur lors du signalement:", error);
       toast.error("Erreur lors de l'envoi", {
