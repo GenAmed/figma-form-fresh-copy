@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -10,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MessageNotifications } from "@/components/admin/MessageNotifications";
 import { useHomeStats } from "@/hooks/useHomeStats";
+import { useRecentAlerts } from "@/hooks/useRecentAlerts";
+import { useRecentActivity } from "@/hooks/useRecentActivity";
 
 interface HomeAdminProps {
   user: User;
@@ -19,6 +20,8 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState<boolean>(true);
   const { stats, loading: statsLoading } = useHomeStats();
+  const { alerts, loading: alertsLoading } = useRecentAlerts();
+  const { activities, loading: activitiesLoading } = useRecentActivity();
 
   // Vérifier la connexion à Supabase
   useEffect(() => {
@@ -46,6 +49,38 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
     // Schedule the regular checks
     scheduleUnassignedWorkersCheck();
   }, []);
+
+  const getAlertIcon = (type: string) => {
+    switch (type) {
+      case "danger":
+        return "text-red-500";
+      case "warning":
+        return "text-amber-500";
+      case "info":
+      default:
+        return "text-blue-500";
+    }
+  };
+
+  const getAlertBgColor = (type: string) => {
+    switch (type) {
+      case "danger":
+        return "bg-red-50";
+      case "warning":
+        return "bg-amber-50";
+      case "info":
+      default:
+        return "bg-blue-50";
+    }
+  };
+
+  const getActivityIcon = (action: string) => {
+    return action === "entry" ? "text-green-600" : "text-red-600";
+  };
+
+  const getActivityBgColor = (action: string) => {
+    return action === "entry" ? "bg-green-100" : "bg-red-100";
+  };
 
   return (
     <div className="h-full text-base-content">
@@ -145,56 +180,76 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
             <h2 className="text-lg font-bold text-[#333333]">Alertes Récentes</h2>
             <Link to="/rapports?tab=alerts" className="text-xs text-[#BD1E28]">Voir tout</Link>
           </div>
-          <div className="space-y-3">
-            <div className="flex items-start space-x-3 p-3 bg-red-50 rounded-md">
-              <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Heures supplémentaires excessives</p>
-                <p className="text-xs text-[#666666]">Jean Dupont - +4h au delà du seuil</p>
+          {alertsLoading ? (
+            <div className="space-y-3">
+              <div className="animate-pulse">
+                <div className="h-16 bg-gray-200 rounded-md"></div>
+              </div>
+              <div className="animate-pulse">
+                <div className="h-16 bg-gray-200 rounded-md"></div>
               </div>
             </div>
-            <div className="flex items-start space-x-3 p-3 bg-amber-50 rounded-md">
-              <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Absence non justifiée</p>
-                <p className="text-xs text-[#666666]">Marie Martin - Chantier Bordeaux</p>
-              </div>
+          ) : alerts.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-[#666666]">Aucune alerte récente</p>
             </div>
-            <div className="flex items-start space-x-3 p-3 bg-amber-50 rounded-md">
-              <AlertTriangle className="w-5 h-5 text-amber-500 mt-0.5" />
-              <div>
-                <p className="text-sm font-medium">Ouvriers non assignés</p>
-                <p className="text-xs text-[#666666]">1 ouvrier sans assignation semaine prochaine</p>
-              </div>
+          ) : (
+            <div className="space-y-3">
+              {alerts.map((alert) => (
+                <div key={alert.id} className={`flex items-start space-x-3 p-3 ${getAlertBgColor(alert.type)} rounded-md`}>
+                  <AlertTriangle className={`w-5 h-5 ${getAlertIcon(alert.type)} mt-0.5`} />
+                  <div>
+                    <p className="text-sm font-medium">{alert.title}</p>
+                    <p className="text-xs text-[#666666]">{alert.description}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-          </div>
+          )}
         </section>
 
         {/* Recent Activity */}
         <section id="recent-activity" className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <h2 className="text-lg font-bold text-[#333333] mb-4">Activité Récente</h2>
-          <div className="space-y-4">
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-green-600" />
+          {activitiesLoading ? (
+            <div className="space-y-4">
+              <div className="animate-pulse flex items-start space-x-3">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm text-[#333333]">Jean Dupont - Pointage entrée</p>
-                <p className="text-xs text-[#666666]">Chantier: Tour Eiffel</p>
-                <p className="text-xs text-[#666666]">Il y a 5 minutes</p>
-              </div>
-            </div>
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
-                <Clock className="w-4 h-4 text-red-600" />
-              </div>
-              <div>
-                <p className="text-sm text-[#333333]">Marie Martin - Pointage sortie</p>
-                <p className="text-xs text-[#666666]">Chantier: Arc de Triomphe</p>
-                <p className="text-xs text-[#666666]">Il y a 12 minutes</p>
+              <div className="animate-pulse flex items-start space-x-3">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-3/4"></div>
+                </div>
               </div>
             </div>
-          </div>
+          ) : activities.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-sm text-[#666666]">Aucune activité récente</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {activities.map((activity) => (
+                <div key={activity.id} className="flex items-start space-x-3">
+                  <div className={`w-8 h-8 rounded-full ${getActivityBgColor(activity.action)} flex items-center justify-center`}>
+                    <Clock className={`w-4 h-4 ${getActivityIcon(activity.action)}`} />
+                  </div>
+                  <div>
+                    <p className="text-sm text-[#333333]">
+                      {activity.user_name} - Pointage {activity.action === "entry" ? "entrée" : "sortie"}
+                    </p>
+                    <p className="text-xs text-[#666666]">Chantier: {activity.worksite_name}</p>
+                    <p className="text-xs text-[#666666]">{activity.time_ago}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 
