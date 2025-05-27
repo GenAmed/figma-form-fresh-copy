@@ -43,9 +43,19 @@ export const MessageNotifications: React.FC = () => {
         return;
       }
 
-      const unread = messages || [];
-      setUnreadCount(unread.length);
-      setRecentMessages(unread);
+      // Convert the data to match our interface with proper type casting
+      const typedMessages: InternalMessage[] = (messages || []).map(message => ({
+        id: message.id,
+        sender_name: message.sender_name,
+        subject: message.subject,
+        content: message.content,
+        priority: (message.priority === 'urgent' ? 'urgent' : 'normal') as 'normal' | 'urgent',
+        status: (message.status === 'read' ? 'read' : 'new') as 'new' | 'read',
+        created_at: message.created_at
+      }));
+
+      setUnreadCount(typedMessages.length);
+      setRecentMessages(typedMessages);
     } catch (error) {
       console.error("Erreur lors du chargement des messages non lus:", error);
     } finally {
@@ -61,13 +71,23 @@ export const MessageNotifications: React.FC = () => {
         schema: 'public',
         table: 'internal_messages'
       }, (payload) => {
-        const newMessage = payload.new as InternalMessage;
+        const newMessage = payload.new;
+        const typedNewMessage: InternalMessage = {
+          id: newMessage.id,
+          sender_name: newMessage.sender_name,
+          subject: newMessage.subject,
+          content: newMessage.content,
+          priority: (newMessage.priority === 'urgent' ? 'urgent' : 'normal') as 'normal' | 'urgent',
+          status: (newMessage.status === 'read' ? 'read' : 'new') as 'new' | 'read',
+          created_at: newMessage.created_at
+        };
+        
         setUnreadCount(prev => prev + 1);
-        setRecentMessages(prev => [newMessage, ...prev.slice(0, 4)]);
+        setRecentMessages(prev => [typedNewMessage, ...prev.slice(0, 4)]);
         
         // Notification sonore/visuelle
         toast.info("Nouveau message reçu", {
-          description: `${newMessage.sender_name}: ${newMessage.subject}`,
+          description: `${typedNewMessage.sender_name}: ${typedNewMessage.subject}`,
           duration: 5000
         });
       })
