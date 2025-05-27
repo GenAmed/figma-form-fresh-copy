@@ -37,8 +37,9 @@ export const SupabaseLoginForm: React.FC = () => {
 
   // Redirection automatique si l'utilisateur est déjà connecté
   useEffect(() => {
+    console.log("🔍 [useEffect] user:", !!user, "loading:", loading, "isSubmitting:", isSubmitting);
     if (user && !loading && !isSubmitting) {
-      console.log("🔄 Utilisateur déjà connecté, redirection vers /home");
+      console.log("🔄 [useEffect] Utilisateur déjà connecté, redirection vers /home");
       navigate("/home", { replace: true });
     }
   }, [user, loading, isSubmitting, navigate]);
@@ -46,22 +47,27 @@ export const SupabaseLoginForm: React.FC = () => {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("🔐 Tentative de connexion avec Supabase:", data.email);
+      console.log("🔐 [onSubmit] Début - Tentative de connexion avec:", data.email);
       
       const result = await signIn(data.email, data.password);
+      console.log("📊 [onSubmit] Résultat signIn:", !!result.user, result.user?.email);
       
       if (result.user) {
+        console.log("✅ [onSubmit] Utilisateur connecté avec succès");
         showSuccessToast("Connexion réussie", "Bienvenue !");
-        console.log("✅ Connexion réussie, redirection immédiate");
         
-        // Redirection immédiate après connexion réussie
+        console.log("🔄 [onSubmit] Programmation de la redirection dans 500ms");
+        // Redirection différée pour laisser le temps à l'état de se mettre à jour
         setTimeout(() => {
+          console.log("🚀 [setTimeout] Exécution de la redirection vers /home");
           navigate("/home", { replace: true });
-        }, 100);
+        }, 500);
+      } else {
+        console.log("❌ [onSubmit] Pas d'utilisateur dans le résultat");
       }
       
     } catch (error: any) {
-      console.error("❌ Erreur de connexion:", error);
+      console.error("❌ [onSubmit] Erreur de connexion:", error);
       
       let errorMessage = "Une erreur s'est produite";
       
@@ -77,6 +83,7 @@ export const SupabaseLoginForm: React.FC = () => {
       
       showErrorToast("Échec de connexion", errorMessage);
     } finally {
+      console.log("🏁 [onSubmit] Fin - setIsSubmitting(false)");
       setIsSubmitting(false);
     }
   };

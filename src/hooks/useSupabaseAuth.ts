@@ -15,7 +15,7 @@ export const useSupabaseAuth = () => {
     const setAuthData = (session: Session | null) => {
       if (!mounted) return;
       
-      console.log('🔐 Setting auth data:', session?.user?.email || 'No session');
+      console.log('🔐 [useSupabaseAuth] Setting auth data:', session?.user?.email || 'No session');
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
@@ -24,7 +24,7 @@ export const useSupabaseAuth = () => {
     // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('🔐 Auth state changed:', event);
+        console.log('🔐 [useSupabaseAuth] Auth state changed:', event, 'User:', session?.user?.email || 'No user');
         setAuthData(session);
       }
     );
@@ -32,9 +32,9 @@ export const useSupabaseAuth = () => {
     // Récupérer la session initiale
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        console.error('❌ Erreur lors de la récupération de la session:', error);
+        console.error('❌ [useSupabaseAuth] Erreur lors de la récupération de la session:', error);
       } else {
-        console.log('🔍 Session initiale récupérée:', session?.user?.email || 'Aucune session');
+        console.log('🔍 [useSupabaseAuth] Session initiale récupérée:', session?.user?.email || 'Aucune session');
       }
       setAuthData(session);
     });
@@ -46,7 +46,7 @@ export const useSupabaseAuth = () => {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    console.log('🔐 Attempting sign in for:', email);
+    console.log('🔐 [signIn] Attempting sign in for:', email);
     setLoading(true);
     
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -55,17 +55,17 @@ export const useSupabaseAuth = () => {
     });
     
     if (error) {
-      console.error('❌ Sign in error:', error);
+      console.error('❌ [signIn] Sign in error:', error);
       setLoading(false);
       throw error;
     }
     
-    console.log('✅ Sign in successful:', data.user?.email);
+    console.log('✅ [signIn] Sign in successful:', data.user?.email, 'Session:', !!data.session);
     return data;
   };
 
   const signUp = async (email: string, password: string, metadata?: any) => {
-    console.log('📝 Attempting sign up for:', email);
+    console.log('📝 [signUp] Attempting sign up for:', email);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -75,32 +75,32 @@ export const useSupabaseAuth = () => {
     });
     
     if (error) {
-      console.error('❌ Sign up error:', error);
+      console.error('❌ [signUp] Sign up error:', error);
       throw error;
     }
     
-    console.log('✅ Sign up successful:', data.user?.email);
+    console.log('✅ [signUp] Sign up successful:', data.user?.email);
     return data;
   };
 
   const signOut = async () => {
-    console.log('🚪 Signing out...');
+    console.log('🚪 [signOut] Signing out...');
     const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('❌ Sign out error:', error);
+      console.error('❌ [signOut] Sign out error:', error);
       throw error;
     }
-    console.log('✅ Sign out successful');
+    console.log('✅ [signOut] Sign out successful');
   };
 
   const resetPassword = async (email: string) => {
-    console.log('🔄 Requesting password reset for:', email);
+    console.log('🔄 [resetPassword] Requesting password reset for:', email);
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) {
-      console.error('❌ Password reset error:', error);
+      console.error('❌ [resetPassword] Password reset error:', error);
       throw error;
     }
-    console.log('✅ Password reset email sent');
+    console.log('✅ [resetPassword] Password reset email sent');
   };
 
   return {
