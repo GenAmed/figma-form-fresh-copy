@@ -27,15 +27,26 @@ const isValidUUID = (str: string): boolean => {
  * Générer un UUID temporaire pour les utilisateurs avec des IDs non-UUID
  */
 const generateTempUUID = (userId: string): string => {
-  // Créer un UUID déterministe basé sur l'ID utilisateur
-  const hash = userId.split('').reduce((a, b) => {
-    a = ((a << 5) - a) + b.charCodeAt(0);
-    return a & a;
-  }, 0);
+  // Créer un hash simple à partir de l'ID utilisateur
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    const char = userId.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convertir en 32-bit integer
+  }
   
-  // Convertir en UUID format (simple mais déterministe)
-  const hex = Math.abs(hash).toString(16).padStart(8, '0');
-  return `${hex.slice(0, 8)}-${hex.slice(0, 4)}-4${hex.slice(1, 4)}-8${hex.slice(0, 3)}-${hex.slice(0, 12).padEnd(12, '0')}`;
+  // Assurer que le hash est positif et convertir en hex
+  const positiveHash = Math.abs(hash);
+  const hex = positiveHash.toString(16).padStart(8, '0');
+  
+  // Créer un UUID v4 valide avec le hash
+  const part1 = hex.slice(0, 8);
+  const part2 = hex.slice(0, 4);
+  const part3 = '4' + hex.slice(1, 4); // Version 4 UUID
+  const part4 = '8' + hex.slice(0, 3); // Variant bits
+  const part5 = (hex + hex).slice(0, 12); // Étendre pour avoir 12 caractères
+  
+  return `${part1}-${part2}-${part3}-${part4}-${part5}`;
 };
 
 /**
@@ -58,6 +69,7 @@ export const sendInternalMessage = async (
   if (!isValidUUID(senderId)) {
     console.warn(`ID utilisateur "${senderId}" n'est pas un UUID valide, génération d'un UUID temporaire`);
     senderId = generateTempUUID(senderId);
+    console.log(`UUID temporaire généré: ${senderId}`);
   }
 
   try {
