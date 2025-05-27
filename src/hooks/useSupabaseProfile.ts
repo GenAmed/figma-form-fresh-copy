@@ -40,7 +40,17 @@ export const useSupabaseProfile = () => {
           setProfile(null);
         } else {
           console.log("✅ Profil récupéré:", data);
-          setProfile(data);
+          // Conversion sûre du type role
+          const profileData: UserProfile = {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            role: (data.role === "admin" || data.role === "ouvrier") ? data.role : "ouvrier",
+            avatar_url: data.avatar_url,
+            phone: data.phone,
+            active: data.active
+          };
+          setProfile(profileData);
         }
       } catch (error) {
         console.error("❌ Erreur lors de la récupération du profil:", error);
