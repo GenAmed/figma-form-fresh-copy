@@ -1,10 +1,9 @@
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InputField } from "./InputField";
-import { useNavigate } from "react-router-dom";
 import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
 import { showSuccessToast, showErrorToast } from "@/services/notifications/toastService";
 
@@ -19,8 +18,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const SupabaseLoginForm: React.FC = () => {
-  const navigate = useNavigate();
-  const { signIn, user, loading } = useSupabaseAuth();
+  const { signIn } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const {
@@ -34,16 +32,6 @@ export const SupabaseLoginForm: React.FC = () => {
       password: "",
     },
   });
-
-  // Redirection automatique si l'utilisateur est déjà connecté
-  useEffect(() => {
-    console.log("🔍 [LoginForm] Vérification utilisateur connecté:", { user: !!user, loading });
-    
-    if (user && !loading) {
-      console.log("🔄 [LoginForm] Utilisateur déjà connecté, redirection vers /home");
-      navigate("/home", { replace: true });
-    }
-  }, [user, loading, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
@@ -60,10 +48,7 @@ export const SupabaseLoginForm: React.FC = () => {
       if (result.user && result.session) {
         console.log("✅ [LoginForm] Connexion réussie");
         showSuccessToast("Connexion réussie", "Bienvenue !");
-        
-        // La redirection sera gérée par le useEffect ci-dessus
-        // quand l'état user sera mis à jour par useSupabaseAuth
-        
+        // La redirection sera gérée par le SupabaseAuthGuard
       } else {
         console.log("❌ [LoginForm] Pas d'utilisateur ou de session dans le résultat");
         showErrorToast("Échec de connexion", "Une erreur s'est produite");

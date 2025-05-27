@@ -20,13 +20,11 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   const { user, loading } = useSupabaseAuth();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
-  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user) {
         setProfileLoading(false);
-        setHasCheckedAuth(true);
         return;
       }
 
@@ -49,7 +47,6 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
         console.error("❌ [AuthGuard] Erreur lors de la récupération du profil:", error);
       } finally {
         setProfileLoading(false);
-        setHasCheckedAuth(true);
       }
     };
 
@@ -57,8 +54,8 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   }, [user]);
 
   useEffect(() => {
-    if (loading || profileLoading || !hasCheckedAuth) {
-      console.log("🔄 [AuthGuard] En cours de chargement...", { loading, profileLoading, hasCheckedAuth });
+    if (loading || profileLoading) {
+      console.log("🔄 [AuthGuard] En cours de chargement...", { loading, profileLoading });
       return;
     }
 
@@ -70,7 +67,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     });
 
     // Si l'utilisateur est connecté et sur la page de connexion, rediriger vers /home
-    if (user && location.pathname === "/" && !requireAuth) {
+    if (user && location.pathname === "/") {
       console.log("🔄 [AuthGuard] Utilisateur connecté sur page de connexion, redirection vers /home");
       navigate("/home", { replace: true });
       return;
@@ -97,15 +94,27 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     }
 
     console.log("✅ [AuthGuard] Accès autorisé");
-  }, [navigate, location.pathname, requireAuth, requireRole, user, loading, userProfile, profileLoading, hasCheckedAuth]);
+  }, [navigate, location.pathname, requireAuth, requireRole, user, loading, userProfile, profileLoading]);
 
   // Affichage de chargement
-  if (loading || profileLoading || !hasCheckedAuth) {
+  if (loading || profileLoading) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
           <p className="text-gray-600">Vérification de l'authentification...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Ne pas afficher le contenu si on est en train de rediriger
+  if (user && location.pathname === "/" && !requireAuth) {
+    return (
+      <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
+          <p className="text-gray-600">Redirection en cours...</p>
         </div>
       </div>
     );
