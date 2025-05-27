@@ -16,22 +16,12 @@ import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 export const HomeAdmin: React.FC = () => {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState<boolean>(true);
+  
+  // Always call hooks at the top level
   const { stats, loading: statsLoading } = useHomeStats();
   const { alerts, loading: alertsLoading } = useRecentAlerts();
   const { activities, loading: activitiesLoading } = useRecentActivity();
   const { profile, user } = useSupabaseProfile();
-
-  // Si pas de profil, ne pas afficher le composant
-  if (!profile || !user) {
-    return (
-      <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
-          <p className="text-gray-600">Chargement du profil...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Vérifier la connexion à Supabase
   useEffect(() => {
@@ -59,6 +49,18 @@ export const HomeAdmin: React.FC = () => {
     // Schedule the regular checks
     scheduleUnassignedWorkersCheck();
   }, []);
+
+  // Early returns AFTER all hooks have been called
+  if (!profile || !user) {
+    return (
+      <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#BD1E28] border-e-transparent mb-4"></div>
+          <p className="text-gray-600">Chargement du profil...</p>
+        </div>
+      </div>
+    );
+  }
 
   const getAlertIcon = (type: string) => {
     switch (type) {
@@ -153,28 +155,28 @@ export const HomeAdmin: React.FC = () => {
         <section id="admin-actions" className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <h2 className="text-lg font-bold text-[#333333] mb-4">Administration</h2>
           <div className="space-y-3">
-            <Link to="/gestion/users" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+            <Link to="/gestion/users" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
               <span className="flex items-center">
                 <Users className="w-5 h-5 mr-3" />
                 Gérer les utilisateurs
               </span>
               <ChevronRight className="w-5 h-5" />
             </Link>
-            <Link to="/gestion" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+            <Link to="/gestion" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
               <span className="flex items-center">
                 <Building className="w-5 h-5 mr-3" />
                 Gérer les chantiers
               </span>
               <ChevronRight className="w-5 h-5" />
             </Link>
-            <Link to="/rapports" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+            <Link to="/rapports" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
               <span className="flex items-center">
                 <FileText className="w-5 h-5 mr-3" />
                 Rapports & Analyses
               </span>
               <ChevronRight className="w-5 h-5" />
             </Link>
-            <Link to="/calendrier" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333]">
+            <Link to="/calendrier" className="w-full flex items-center justify-between p-3 bg-[#F8F8F8] rounded-md text-[#333333] hover:bg-gray-100 transition-colors">
               <span className="flex items-center">
                 <Clock className="w-5 h-5 mr-3" />
                 Calendrier & Assignations
