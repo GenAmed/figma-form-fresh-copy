@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -24,7 +23,7 @@ const isValidUUID = (str: string): boolean => {
 };
 
 /**
- * Générer un UUID temporaire pour les utilisateurs avec des IDs non-UUID
+ * Générer un UUID v4 déterministe à partir d'un string
  */
 const generateTempUUID = (userId: string): string => {
   // Créer un hash simple à partir de l'ID utilisateur
@@ -35,18 +34,39 @@ const generateTempUUID = (userId: string): string => {
     hash = hash & hash; // Convertir en 32-bit integer
   }
   
-  // Assurer que le hash est positif et convertir en hex
+  // Assurer que le hash est positif
   const positiveHash = Math.abs(hash);
-  const hex = positiveHash.toString(16).padStart(8, '0');
   
-  // Créer un UUID v4 valide avec le hash
-  const part1 = hex.slice(0, 8);
-  const part2 = hex.slice(0, 4);
-  const part3 = '4' + hex.slice(1, 4); // Version 4 UUID
-  const part4 = '8' + hex.slice(0, 3); // Variant bits
-  const part5 = (hex + hex).slice(0, 12); // Étendre pour avoir 12 caractères
+  // Générer des valeurs pseudo-aléatoires basées sur le hash
+  const random = () => {
+    hash = ((hash * 9301) + 49297) % 233280;
+    return hash / 233280;
+  };
   
-  return `${part1}-${part2}-${part3}-${part4}-${part5}`;
+  // Initialiser le générateur avec notre hash
+  hash = positiveHash;
+  
+  // Générer un UUID v4 valide
+  const chars = '0123456789abcdef';
+  let uuid = '';
+  
+  for (let i = 0; i < 32; i++) {
+    if (i === 8 || i === 12 || i === 16 || i === 20) {
+      uuid += '-';
+    }
+    
+    if (i === 12) {
+      // Version 4
+      uuid += '4';
+    } else if (i === 16) {
+      // Variant (8, 9, a, or b)
+      uuid += chars[8 + Math.floor(random() * 4)];
+    } else {
+      uuid += chars[Math.floor(random() * 16)];
+    }
+  }
+  
+  return uuid;
 };
 
 /**
@@ -70,6 +90,7 @@ export const sendInternalMessage = async (
     console.warn(`ID utilisateur "${senderId}" n'est pas un UUID valide, génération d'un UUID temporaire`);
     senderId = generateTempUUID(senderId);
     console.log(`UUID temporaire généré: ${senderId}`);
+    console.log(`UUID valide? ${isValidUUID(senderId)}`);
   }
 
   try {
