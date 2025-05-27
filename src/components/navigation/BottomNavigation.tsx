@@ -1,15 +1,15 @@
 
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Home, Clock, CalendarDays, Settings, User, BarChart } from "lucide-react";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 interface BottomNavigationProps {
   activeTab: string;
 }
 
 export const BottomNavigation: React.FC<BottomNavigationProps> = ({ activeTab }) => {
-  const { profile } = useSupabaseProfile();
+  const { profile } = useAuth();
   const isAdmin = profile?.role === "admin";
 
   return (

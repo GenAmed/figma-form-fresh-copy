@@ -2,10 +2,10 @@
 import React from "react";
 import { HomeWorker } from "@/components/home/HomeWorker";
 import { HomeAdmin } from "@/components/home/HomeAdmin";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 const Home: React.FC = () => {
-  const { profile, loading, error, user } = useSupabaseProfile();
+  const { profile, loading, error, user } = useAuth();
 
   console.log("🏠 [Home] État:", {
     hasProfile: !!profile,
