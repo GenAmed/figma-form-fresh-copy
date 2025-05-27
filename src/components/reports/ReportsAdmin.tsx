@@ -2,7 +2,7 @@
 import React from "react";
 import { User } from "@/lib/auth";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
-import { useReports } from "@/hooks/useReports";
+import { useReports } from "@/hooks/useReports.tsx";
 import { useReportsData } from "@/hooks/useReportsData";
 import { useAlertsData } from "@/hooks/useAlertsData";
 import { ReportsHeader } from "./ReportsHeader";
@@ -36,9 +36,7 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
     handlePrintReport,
     handleAlertStatusChange,
     handleSaveReport,
-    handleDeleteReport,
-    mockChantiers,
-    mockEmployes
+    handleDeleteReport
   } = useReports([], []);
 
   // Utiliser les hooks pour récupérer les données réelles
@@ -67,8 +65,8 @@ export const ReportsAdmin: React.FC<ReportsAdminProps> = ({ user }) => {
           selectedEmployes={selectedEmployes}
           toggleEmployeSelection={toggleEmployeSelection}
           setShowFilters={setShowFilters}
-          mockChantiers={mockChantiers}
-          mockEmployes={mockEmployes}
+          mockChantiers={[]}
+          mockEmployes={[]}
         />
       )}
 
