@@ -5,7 +5,7 @@ import { useAlerts } from "./reports/useAlerts";
 import { useCustomReports } from "./reports/useCustomReports";
 
 // Hook principal pour gérer les rapports et exports
-export const useReports = (mockChantiers: any[], mockEmployes: any[]) => {
+export const useReports = () => {
   const {
     dateRange,
     setDateRange,

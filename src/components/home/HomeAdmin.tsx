@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -8,6 +9,7 @@ import { scheduleUnassignedWorkersCheck, checkAndNotifyUnassignedWorkers } from 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MessageNotifications } from "@/components/admin/MessageNotifications";
+import { useHomeStats } from "@/hooks/useHomeStats";
 
 interface HomeAdminProps {
   user: User;
@@ -16,6 +18,7 @@ interface HomeAdminProps {
 export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
   const navigate = useNavigate();
   const [isConnected, setIsConnected] = useState<boolean>(true);
+  const { stats, loading: statsLoading } = useHomeStats();
 
   // Vérifier la connexion à Supabase
   useEffect(() => {
@@ -86,18 +89,22 @@ export const HomeAdmin: React.FC<HomeAdminProps> = ({ user }) => {
             onClick={() => navigate("/gestion/users")}
           >
             <p className="text-sm text-[#666666]">Employés Actifs</p>
-            <p className="text-2xl font-bold text-[#333333]">24</p>
+            <p className="text-2xl font-bold text-[#333333]">
+              {statsLoading ? "..." : stats.employesActifs}
+            </p>
           </Card>
           <Card 
             className="bg-white rounded-lg shadow-sm p-4 cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() => navigate("/gestion")}
           >
             <p className="text-sm text-[#666666]">Chantiers Actifs</p>
-            <p className="text-2xl font-bold text-[#333333]">8</p>
+            <p className="text-2xl font-bold text-[#333333]">
+              {statsLoading ? "..." : stats.chantiersActifs}
+            </p>
           </Card>
         </section>
 
-        {/* Admin Actions */}
+        {/* Administration */}
         <section id="admin-actions" className="bg-white rounded-lg shadow-sm p-4 mb-6">
           <h2 className="text-lg font-bold text-[#333333] mb-4">Administration</h2>
           <div className="space-y-3">
