@@ -20,16 +20,18 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   const { user, loading } = useSupabaseAuth();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [profileLoading, setProfileLoading] = useState(true);
+  const [hasCheckedAuth, setHasCheckedAuth] = useState(false);
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user) {
         setProfileLoading(false);
+        setHasCheckedAuth(true);
         return;
       }
 
       try {
-        console.log("🔍 Récupération du profil utilisateur:", user.email);
+        console.log("🔍 [AuthGuard] Récupération du profil utilisateur:", user.email);
         
         const { data: profile, error } = await supabase
           .from("profiles")
@@ -38,15 +40,16 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
           .single();
 
         if (error) {
-          console.error("❌ Erreur lors de la récupération du profil:", error);
+          console.error("❌ [AuthGuard] Erreur lors de la récupération du profil:", error);
         } else {
-          console.log("✅ Profil utilisateur récupéré:", profile);
+          console.log("✅ [AuthGuard] Profil utilisateur récupéré:", profile);
           setUserProfile(profile);
         }
       } catch (error) {
-        console.error("❌ Erreur lors de la récupération du profil:", error);
+        console.error("❌ [AuthGuard] Erreur lors de la récupération du profil:", error);
       } finally {
         setProfileLoading(false);
+        setHasCheckedAuth(true);
       }
     };
 
@@ -54,30 +57,50 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   }, [user]);
 
   useEffect(() => {
-    if (loading || profileLoading) return;
+    if (loading || profileLoading || !hasCheckedAuth) {
+      console.log("🔄 [AuthGuard] En cours de chargement...", { loading, profileLoading, hasCheckedAuth });
+      return;
+    }
+
+    console.log("🔍 [AuthGuard] Vérification des permissions:", {
+      requireAuth,
+      user: !!user,
+      userProfile,
+      currentPath: location.pathname
+    });
+
+    // Si l'utilisateur est connecté et sur la page de connexion, rediriger vers /home
+    if (user && location.pathname === "/" && !requireAuth) {
+      console.log("🔄 [AuthGuard] Utilisateur connecté sur page de connexion, redirection vers /home");
+      navigate("/home", { replace: true });
+      return;
+    }
 
     // Si l'authentification n'est pas requise, autoriser l'accès
     if (!requireAuth) {
+      console.log("✅ [AuthGuard] Authentification non requise, accès autorisé");
       return;
     }
 
     // Vérifier si l'utilisateur est connecté
     if (!user) {
-      console.log("🔒 Utilisateur non connecté, redirection vers /");
+      console.log("🔒 [AuthGuard] Utilisateur non connecté, redirection vers /");
       navigate("/", { replace: true });
       return;
     }
 
     // Vérifier le rôle si requis
     if (requireRole && userProfile && userProfile.role !== requireRole) {
-      console.log(`🔒 Accès refusé - rôle requis: ${requireRole}, rôle utilisateur: ${userProfile.role}`);
+      console.log(`🔒 [AuthGuard] Accès refusé - rôle requis: ${requireRole}, rôle utilisateur: ${userProfile.role}`);
       navigate("/home", { replace: true });
       return;
     }
-  }, [navigate, location.pathname, requireAuth, requireRole, user, loading, userProfile, profileLoading]);
+
+    console.log("✅ [AuthGuard] Accès autorisé");
+  }, [navigate, location.pathname, requireAuth, requireRole, user, loading, userProfile, profileLoading, hasCheckedAuth]);
 
   // Affichage de chargement
-  if (loading || profileLoading) {
+  if (loading || profileLoading || !hasCheckedAuth) {
     return (
       <div className="min-h-screen bg-[#F8F8F8] flex items-center justify-center">
         <div className="text-center">

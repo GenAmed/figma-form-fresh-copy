@@ -37,45 +37,40 @@ export const SupabaseLoginForm: React.FC = () => {
 
   // Redirection automatique si l'utilisateur est déjà connecté
   useEffect(() => {
-    console.log("🔍 [useEffect REDIRECT] user:", !!user, "loading:", loading, "isSubmitting:", isSubmitting);
+    console.log("🔍 [LoginForm] Vérification utilisateur connecté:", { user: !!user, loading });
     
-    if (user && !loading && !isSubmitting) {
-      console.log("🔄 [useEffect REDIRECT] Utilisateur déjà connecté, redirection immédiate vers /home");
+    if (user && !loading) {
+      console.log("🔄 [LoginForm] Utilisateur déjà connecté, redirection vers /home");
       navigate("/home", { replace: true });
-    } else {
-      console.log("🚫 [useEffect REDIRECT] Conditions non remplies pour la redirection");
-      console.log("    - user:", !!user);
-      console.log("    - loading:", loading);
-      console.log("    - isSubmitting:", isSubmitting);
     }
-  }, [user, loading, isSubmitting, navigate]);
+  }, [user, loading, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("🔐 [onSubmit START] Tentative de connexion avec:", data.email);
+      console.log("🔐 [LoginForm] Tentative de connexion avec:", data.email);
       
       const result = await signIn(data.email, data.password);
-      console.log("📊 [onSubmit RESULT] Résultat signIn:");
-      console.log("    - user:", !!result.user, result.user?.email);
-      console.log("    - session:", !!result.session);
+      console.log("📊 [LoginForm] Résultat signIn:", {
+        user: !!result.user,
+        email: result.user?.email,
+        session: !!result.session
+      });
       
       if (result.user && result.session) {
-        console.log("✅ [onSubmit SUCCESS] Connexion réussie, redirection FORCÉE");
+        console.log("✅ [LoginForm] Connexion réussie");
         showSuccessToast("Connexion réussie", "Bienvenue !");
         
-        // Redirection immédiate et forcée
-        console.log("🚀 [onSubmit] REDIRECTION IMMÉDIATE vers /home");
-        window.location.href = "/home";
+        // La redirection sera gérée par le useEffect ci-dessus
+        // quand l'état user sera mis à jour par useSupabaseAuth
         
       } else {
-        console.log("❌ [onSubmit ERROR] Pas d'utilisateur ou de session dans le résultat");
-        console.log("    - result.user:", !!result.user);
-        console.log("    - result.session:", !!result.session);
+        console.log("❌ [LoginForm] Pas d'utilisateur ou de session dans le résultat");
+        showErrorToast("Échec de connexion", "Une erreur s'est produite");
       }
       
     } catch (error: any) {
-      console.error("❌ [onSubmit CATCH] Erreur de connexion:", error);
+      console.error("❌ [LoginForm] Erreur de connexion:", error);
       
       let errorMessage = "Une erreur s'est produite";
       
@@ -91,7 +86,7 @@ export const SupabaseLoginForm: React.FC = () => {
       
       showErrorToast("Échec de connexion", errorMessage);
     } finally {
-      console.log("🏁 [onSubmit FINALLY] setIsSubmitting(false)");
+      console.log("🏁 [LoginForm] setIsSubmitting(false)");
       setIsSubmitting(false);
     }
   };
