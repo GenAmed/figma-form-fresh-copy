@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
 import { Header } from "@/components/navigation/Header";
@@ -7,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { AlertTriangle, CalendarDays, Timer, WifiOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ReportIssueDialog } from "@/components/reports/ReportIssueDialog";
 
 interface HomeWorkerProps {
   user: User;
@@ -39,13 +39,6 @@ export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
 
   const handleClockButton = () => {
     navigate("/pointage");
-  };
-
-  const handleReportIssue = () => {
-    toast.info("Signalement d'un problème", {
-      description: "Cette fonctionnalité sera disponible prochainement.",
-      duration: 4000,
-    });
   };
 
   const handleViewSchedule = () => {
@@ -109,14 +102,15 @@ export const HomeWorker: React.FC<HomeWorkerProps> = ({ user }) => {
         <div id="quick-actions" className="mx-4 bg-white rounded-lg shadow-sm p-4">
           <h2 className="text-[#333333] text-lg font-bold mb-3">Actions rapides</h2>
           <div className="grid grid-cols-2 gap-3">
-            <button 
-              id="report-issue" 
-              className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
-              onClick={handleReportIssue}
-            >
-              <AlertTriangle className="text-[#BD1E28] h-5 w-5 mb-2" />
-              <span className="text-sm text-[#333333]">Signaler un problème</span>
-            </button>
+            <ReportIssueDialog>
+              <button 
+                id="report-issue" 
+                className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors w-full"
+              >
+                <AlertTriangle className="text-[#BD1E28] h-5 w-5 mb-2" />
+                <span className="text-sm text-[#333333]">Signaler un problème</span>
+              </button>
+            </ReportIssueDialog>
             <button 
               id="view-schedule" 
               className="flex flex-col items-center justify-center p-4 border border-gray-200 rounded-md hover:bg-gray-50 transition-colors"
