@@ -19,15 +19,18 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   const location = useLocation();
   const { user, loading } = useSupabaseAuth();
   const [userProfile, setUserProfile] = useState<any>(null);
-  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
+  // Récupérer le profil seulement si un rôle est requis
   useEffect(() => {
     const fetchUserProfile = async () => {
-      if (!user) {
+      if (!user || !requireRole) {
+        setUserProfile(null);
         setProfileLoading(false);
         return;
       }
 
+      setProfileLoading(true);
       try {
         console.log("🔍 [AuthGuard] Récupération du profil utilisateur:", user.email);
         
@@ -51,9 +54,10 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     };
 
     fetchUserProfile();
-  }, [user]);
+  }, [user, requireRole]);
 
   useEffect(() => {
+    // Attendre que l'auth soit chargée
     if (loading) {
       console.log("🔄 [AuthGuard] Auth en cours de chargement...");
       return;
@@ -61,42 +65,50 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
 
     console.log("🔍 [AuthGuard] Vérification des permissions:", {
       requireAuth,
-      user: !!user,
-      userProfile,
-      currentPath: location.pathname
+      hasUser: !!user,
+      userEmail: user?.email,
+      currentPath: location.pathname,
+      requireRole,
+      userRole: userProfile?.role
     });
 
-    // Si l'utilisateur est connecté et sur la page de connexion, rediriger vers /home
-    if (user && location.pathname === "/") {
-      console.log("🔄 [AuthGuard] Utilisateur connecté sur page de connexion, redirection vers /home");
-      navigate("/home", { replace: true });
-      return;
-    }
-
-    // Si l'authentification n'est pas requise, autoriser l'accès
+    // Route publique (page de connexion)
     if (!requireAuth) {
-      console.log("✅ [AuthGuard] Authentification non requise, accès autorisé");
+      // Si l'utilisateur est connecté et sur la page de connexion, rediriger vers /home
+      if (user && location.pathname === "/") {
+        console.log("🔄 [AuthGuard] Utilisateur connecté sur page de connexion, redirection vers /home");
+        navigate("/home", { replace: true });
+        return;
+      }
+      console.log("✅ [AuthGuard] Accès autorisé à la route publique");
       return;
     }
 
-    // Vérifier si l'utilisateur est connecté
+    // Routes protégées - vérifier l'authentification
     if (!user) {
       console.log("🔒 [AuthGuard] Utilisateur non connecté, redirection vers /");
       navigate("/", { replace: true });
       return;
     }
 
-    // Si on a besoin du profil et qu'il n'est pas encore chargé, attendre
-    if (requireRole && profileLoading) {
-      console.log("🔄 [AuthGuard] Profile en cours de chargement...");
-      return;
-    }
+    // Si un rôle est requis, attendre le chargement du profil
+    if (requireRole) {
+      if (profileLoading) {
+        console.log("🔄 [AuthGuard] Profile en cours de chargement...");
+        return;
+      }
 
-    // Vérifier le rôle si requis
-    if (requireRole && userProfile && userProfile.role !== requireRole) {
-      console.log(`🔒 [AuthGuard] Accès refusé - rôle requis: ${requireRole}, rôle utilisateur: ${userProfile.role}`);
-      navigate("/home", { replace: true });
-      return;
+      if (!userProfile) {
+        console.log("❌ [AuthGuard] Profil non trouvé");
+        navigate("/", { replace: true });
+        return;
+      }
+
+      if (userProfile.role !== requireRole) {
+        console.log(`🔒 [AuthGuard] Accès refusé - rôle requis: ${requireRole}, rôle utilisateur: ${userProfile.role}`);
+        navigate("/home", { replace: true });
+        return;
+      }
     }
 
     console.log("✅ [AuthGuard] Accès autorisé");
@@ -124,16 +136,6 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
         </div>
       </div>
     );
-  }
-
-  // Rediriger vers la page de connexion si pas authentifié
-  if (requireAuth && !user) {
-    return null;
-  }
-
-  // Vérifier les permissions de rôle
-  if (requireRole && userProfile && userProfile.role !== requireRole) {
-    return null;
   }
 
   // Afficher le contenu si autorisé

@@ -46,9 +46,9 @@ export const SupabaseLoginForm: React.FC = () => {
       });
       
       if (result.user && result.session) {
-        console.log("✅ [LoginForm] Connexion réussie");
+        console.log("✅ [LoginForm] Connexion réussie, redirection gérée par AuthGuard");
         showSuccessToast("Connexion réussie", "Bienvenue !");
-        // La redirection sera gérée par le SupabaseAuthGuard
+        // Pas de redirection manuelle - le SupabaseAuthGuard s'en charge
       } else {
         console.log("❌ [LoginForm] Pas d'utilisateur ou de session dans le résultat");
         showErrorToast("Échec de connexion", "Une erreur s'est produite");
