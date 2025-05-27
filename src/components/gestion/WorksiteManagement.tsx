@@ -1,16 +1,11 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
-import { User } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Building, Pencil, Plus, Trash2, UserPlus, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-interface WorksiteManagementProps {
-  user: User;
-}
+import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
 
 type Worksite = {
   id: string;
@@ -21,8 +16,9 @@ type Worksite = {
   status: "active" | "pending" | "completed";
 };
 
-export const WorksiteManagement: React.FC<WorksiteManagementProps> = ({ user }) => {
+export const WorksiteManagement: React.FC = () => {
   const navigate = useNavigate();
+  const { profile } = useSupabaseProfile();
   const [worksites, setWorksites] = useState<Worksite[]>([]);
   const [loading, setLoading] = useState(true);
 
