@@ -9,7 +9,22 @@ export const useSupabaseAuth = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    // Récupérer la session initiale
+    const getInitialSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) {
+        console.error('❌ Erreur lors de la récupération de la session:', error);
+      } else {
+        console.log('🔍 Session initiale:', session?.user?.email || 'Aucune session');
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
+      setLoading(false);
+    };
+
+    getInitialSession();
+
+    // Écouter les changements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('🔐 Auth state changed:', event, session?.user?.email);
@@ -19,19 +34,13 @@ export const useSupabaseAuth = () => {
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log('🔍 Initial session check:', session?.user?.email);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
 
   const signIn = async (email: string, password: string) => {
     console.log('🔐 Attempting sign in for:', email);
+    setLoading(true);
+    
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -39,37 +48,8 @@ export const useSupabaseAuth = () => {
     
     if (error) {
       console.error('❌ Sign in error:', error);
+      setLoading(false);
       throw error;
-    }
-    
-    // Après la connexion réussie, récupérer le profil utilisateur et mettre à jour les métadonnées
-    if (data.user) {
-      console.log('✅ Sign in successful, fetching user profile...');
-      
-      try {
-        const { data: profile, error: profileError } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .maybeSingle();
-
-        if (profile && !profileError) {
-          console.log('📝 Updating user metadata with role:', profile.role);
-          
-          // Mettre à jour les métadonnées utilisateur avec le rôle
-          const { error: updateError } = await supabase.auth.updateUser({
-            data: { role: profile.role }
-          });
-
-          if (updateError) {
-            console.error('❌ Error updating user metadata:', updateError);
-          } else {
-            console.log('✅ User metadata updated successfully');
-          }
-        }
-      } catch (error) {
-        console.error('❌ Error fetching user profile:', error);
-      }
     }
     
     console.log('✅ Sign in successful:', data.user?.email);

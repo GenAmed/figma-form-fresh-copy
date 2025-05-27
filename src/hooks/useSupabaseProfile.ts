@@ -14,19 +14,21 @@ export interface UserProfile {
 }
 
 export const useSupabaseProfile = () => {
-  const { user } = useSupabaseAuth();
+  const { user, loading: authLoading } = useSupabaseAuth();
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchProfile = async () => {
       if (!user) {
         setProfile(null);
-        setLoading(false);
         setError(null);
         return;
       }
+
+      setProfileLoading(true);
+      setError(null);
 
       try {
         console.log("🔍 Récupération du profil pour:", user.email);
@@ -43,7 +45,6 @@ export const useSupabaseProfile = () => {
           setProfile(null);
         } else if (data) {
           console.log("✅ Profil récupéré:", data);
-          // Conversion sûre du type role
           const profileData: UserProfile = {
             id: data.id,
             name: data.name,
@@ -54,63 +55,29 @@ export const useSupabaseProfile = () => {
             active: data.active
           };
           setProfile(profileData);
-          setError(null);
         } else {
           console.log("ℹ️ Aucun profil trouvé pour cet utilisateur");
-          // Créer un profil par défaut si aucun n'existe
-          try {
-            console.log("🔧 Création d'un profil par défaut...");
-            const { data: newProfile, error: createError } = await supabase
-              .from("profiles")
-              .insert({
-                id: user.id,
-                name: user.email?.split('@')[0] || 'Utilisateur',
-                email: user.email || '',
-                role: 'ouvrier',
-                pin: '0000',
-                active: true
-              })
-              .select()
-              .single();
-
-            if (createError) {
-              console.error("❌ Erreur lors de la création du profil:", createError);
-              setError("Impossible de créer le profil utilisateur");
-            } else {
-              console.log("✅ Profil créé avec succès:", newProfile);
-              const profileData: UserProfile = {
-                id: newProfile.id,
-                name: newProfile.name,
-                email: newProfile.email,
-                role: newProfile.role as "ouvrier" | "admin",
-                avatar_url: newProfile.avatar_url,
-                phone: newProfile.phone,
-                active: newProfile.active
-              };
-              setProfile(profileData);
-              setError(null);
-            }
-          } catch (createError: any) {
-            console.error("❌ Erreur lors de la création du profil:", createError);
-            setError("Impossible de créer le profil utilisateur");
-            setProfile(null);
-          }
+          setError("Profil non trouvé");
+          setProfile(null);
         }
       } catch (error: any) {
         console.error("❌ Erreur lors de la récupération du profil:", error);
         setError(error.message || "Erreur inconnue");
         setProfile(null);
       } finally {
-        setLoading(false);
+        setProfileLoading(false);
       }
     };
 
-    fetchProfile();
-  }, [user]);
+    // Ne récupérer le profil que si l'auth n'est pas en cours de chargement
+    if (!authLoading) {
+      fetchProfile();
+    }
+  }, [user, authLoading]);
 
   return {
     profile,
-    loading,
+    loading: authLoading || profileLoading,
     error,
     user,
   };
