@@ -22,7 +22,6 @@ export const SupabaseLoginForm: React.FC = () => {
   const navigate = useNavigate();
   const { signIn, user, loading } = useSupabaseAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [shouldRedirect, setShouldRedirect] = useState(false);
   
   const {
     register,
@@ -38,37 +37,41 @@ export const SupabaseLoginForm: React.FC = () => {
 
   // Redirection automatique si l'utilisateur est déjà connecté
   useEffect(() => {
-    console.log("🔍 [useEffect REDIRECT] user:", !!user, "loading:", loading, "isSubmitting:", isSubmitting, "shouldRedirect:", shouldRedirect);
+    console.log("🔍 [useEffect REDIRECT] user:", !!user, "loading:", loading, "isSubmitting:", isSubmitting);
     
     if (user && !loading && !isSubmitting) {
-      console.log("🔄 [useEffect REDIRECT] Conditions remplies, redirection vers /home");
+      console.log("🔄 [useEffect REDIRECT] Utilisateur déjà connecté, redirection immédiate vers /home");
       navigate("/home", { replace: true });
-    } else if (shouldRedirect && user && !loading) {
-      console.log("🔄 [useEffect REDIRECT] shouldRedirect=true, redirection vers /home");
-      navigate("/home", { replace: true });
-      setShouldRedirect(false);
     } else {
       console.log("🚫 [useEffect REDIRECT] Conditions non remplies pour la redirection");
+      console.log("    - user:", !!user);
+      console.log("    - loading:", loading);
+      console.log("    - isSubmitting:", isSubmitting);
     }
-  }, [user, loading, isSubmitting, shouldRedirect, navigate]);
+  }, [user, loading, isSubmitting, navigate]);
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsSubmitting(true);
-      console.log("🔐 [onSubmit START] Début - Tentative de connexion avec:", data.email);
+      console.log("🔐 [onSubmit START] Tentative de connexion avec:", data.email);
       
       const result = await signIn(data.email, data.password);
-      console.log("📊 [onSubmit RESULT] Résultat signIn:", !!result.user, result.user?.email);
+      console.log("📊 [onSubmit RESULT] Résultat signIn:");
+      console.log("    - user:", !!result.user, result.user?.email);
+      console.log("    - session:", !!result.session);
       
-      if (result.user) {
-        console.log("✅ [onSubmit SUCCESS] Utilisateur connecté avec succès");
+      if (result.user && result.session) {
+        console.log("✅ [onSubmit SUCCESS] Connexion réussie, redirection FORCÉE");
         showSuccessToast("Connexion réussie", "Bienvenue !");
         
-        // Marquer qu'on devrait rediriger après la mise à jour de l'état
-        console.log("🔄 [onSubmit] Setting shouldRedirect to true");
-        setShouldRedirect(true);
+        // Redirection immédiate et forcée
+        console.log("🚀 [onSubmit] REDIRECTION IMMÉDIATE vers /home");
+        window.location.href = "/home";
+        
       } else {
-        console.log("❌ [onSubmit ERROR] Pas d'utilisateur dans le résultat");
+        console.log("❌ [onSubmit ERROR] Pas d'utilisateur ou de session dans le résultat");
+        console.log("    - result.user:", !!result.user);
+        console.log("    - result.session:", !!result.session);
       }
       
     } catch (error: any) {
