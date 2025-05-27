@@ -5,7 +5,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { InputField } from "./InputField";
 import { useNavigate } from "react-router-dom";
-import { authenticateUser, setCurrentUser } from "@/lib/auth";
+import { authenticateUser, setCurrentUser, getAuthConfig } from "@/lib/auth";
 import { toast } from "sonner";
 
 const loginSchema = z.object({
@@ -13,7 +13,7 @@ const loginSchema = z.object({
     .string()
     .email("Veuillez entrer un email valide")
     .min(1, "L'email est requis"),
-  password: z.string().min(1, "Le mot de passe est requis"),
+  password: z.string().min(4, "Le mot de passe doit contenir au moins 4 caractères"),
   rememberMe: z.boolean().optional(),
 });
 
@@ -21,6 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 export const LoginForm: React.FC = () => {
   const navigate = useNavigate();
+  const authConfig = getAuthConfig();
   const {
     register,
     handleSubmit,
@@ -50,15 +51,14 @@ export const LoginForm: React.FC = () => {
   const onSubmit = (data: LoginFormValues) => {
     triggerHapticFeedback();
     
-    const user = authenticateUser(data.email, data.password);
+    const { user, error } = authenticateUser(data.email, data.password);
     
     if (user) {
       setCurrentUser(user);
       
       toast.success("Connexion réussie", {
-        description: `Bienvenue ${user.name}`,
+        description: `Bienvenue ${user.name} - Session valide ${authConfig.sessionDuration}h`,
         duration: 3000,
-        className: "success-toast",
       });
       
       // Délai avant redirection pour voir le toast
@@ -67,9 +67,8 @@ export const LoginForm: React.FC = () => {
       }, 1000);
     } else {
       toast.error("Échec de connexion", {
-        description: "Email ou mot de passe incorrect",
-        duration: 4000,
-        className: "error-toast",
+        description: error || "Une erreur s'est produite",
+        duration: 5000,
       });
     }
   };
@@ -131,7 +130,7 @@ export const LoginForm: React.FC = () => {
           checked={formValues.rememberMe}
         />
         <label htmlFor="remember" className="font-normal text-sm text-[#666]">
-          Se souvenir de moi
+          Se souvenir de moi (session de {authConfig.sessionDuration}h)
         </label>
       </div>
 
@@ -163,12 +162,17 @@ export const LoginForm: React.FC = () => {
       </div>
 
       <div className="mt-6 border-t pt-4">
-        <div className="text-center mb-2 text-sm font-medium">Comptes de test:</div>
-        <div className="text-xs text-gray-700 mb-1">
-          <strong>Ouvrier:</strong> ouvrier@avem.fr (tout mot de passe)
+        <div className="text-center mb-2 text-sm font-medium text-green-700">✅ Comptes de production sécurisés:</div>
+        <div className="text-xs text-gray-700 mb-1 bg-green-50 p-2 rounded">
+          <strong>Ouvrier:</strong> {authConfig.testCredentials.ouvrier.email} / {authConfig.testCredentials.ouvrier.password}
         </div>
-        <div className="text-xs text-gray-700">
-          <strong>Admin:</strong> admin@avem.fr (tout mot de passe)
+        <div className="text-xs text-gray-700 bg-blue-50 p-2 rounded">
+          <strong>Admin:</strong> {authConfig.testCredentials.admin.email} / {authConfig.testCredentials.admin.password}
+        </div>
+        <div className="text-xs text-gray-500 mt-2">
+          • Protection contre les attaques par force brute<br/>
+          • Sessions sécurisées avec expiration<br/>
+          • Verrouillage automatique après {authConfig.maxLoginAttempts} tentatives
         </div>
       </div>
     </form>
