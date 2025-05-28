@@ -7,7 +7,7 @@ interface Profile {
   id: string;
   name: string;
   email: string;
-  role: string;
+  role: "admin" | "ouvrier";
   avatar_url?: string;
   phone?: string;
   active: boolean;
@@ -45,7 +45,7 @@ export const useAuth = () => {
                 id: profileData.id,
                 name: profileData.name,
                 email: profileData.email,
-                role: profileData.role,
+                role: profileData.role as "admin" | "ouvrier",
                 avatar_url: profileData.avatar_url,
                 phone: profileData.phone,
                 active: profileData.active
