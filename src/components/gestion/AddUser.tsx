@@ -25,7 +25,7 @@ export const AddUser: React.FC = () => {
       // Créer l'utilisateur avec Supabase Auth
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: values.email,
-        password: values.password || 'tempPassword123', // Valeur par défaut si pas de mot de passe
+        password: 'tempPassword123', // Mot de passe temporaire par défaut
         user_metadata: {
           name: values.name,
           role: values.role,
