@@ -2,7 +2,7 @@
 import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface SupabaseAuthGuardProps {
   children: React.ReactNode;
@@ -18,35 +18,41 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile, loading } = useAuth();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || hasRedirected.current) return;
 
     const currentPath = location.pathname;
     
     // Public route (login page)
     if (!requireAuth) {
-      // Only redirect from root if user is logged in
       if (user && currentPath === "/") {
         console.log('User logged in, redirecting to /home');
+        hasRedirected.current = true;
         navigate("/home", { replace: true });
       }
       return;
     }
 
-    // Protected routes - only redirect if no user and not already on login page
+    // Protected routes
     if (!user && currentPath !== "/") {
       console.log('No user, redirecting to login');
+      hasRedirected.current = true;
       navigate("/", { replace: true });
       return;
     }
 
-    // Role-based access - only redirect if role mismatch and not already on home
+    // Role-based access
     if (requireRole && profile && profile.role !== requireRole && currentPath !== "/home") {
       console.log('User role mismatch, redirecting to /home');
+      hasRedirected.current = true;
       navigate("/home", { replace: true });
       return;
     }
+
+    // Reset redirect flag when navigation is complete
+    hasRedirected.current = false;
   }, [loading, user, profile?.role, requireAuth, requireRole, location.pathname, navigate]);
 
   if (loading) {
