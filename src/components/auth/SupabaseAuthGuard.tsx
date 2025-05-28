@@ -22,13 +22,13 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   useEffect(() => {
     if (loading) return;
 
-    console.log(`[AuthGuard] Current path: ${location.pathname}, requireAuth: ${requireAuth}, user: ${!!user}`);
+    console.log(`[AuthGuard] Current path: ${location.pathname}, requireAuth: ${requireAuth}, user: ${!!user}, role: ${profile?.role || 'none'}`);
     
     // Si on est sur la page de login (requireAuth = false)
     if (!requireAuth) {
       // Si l'utilisateur est connecté et sur la page de login, rediriger vers home
       if (user && (location.pathname === "/" || location.pathname === "")) {
-        console.log('Utilisateur connecté sur page login, redirection vers /home');
+        console.log('✅ [AuthGuard] Utilisateur connecté sur page login, redirection vers /home');
         navigate("/home", { replace: true });
       }
       return;
@@ -36,19 +36,19 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
 
     // Si on a besoin d'authentification mais pas d'utilisateur
     if (!user) {
-      console.log('Authentification requise mais pas d\'utilisateur, redirection vers login');
+      console.log('❌ [AuthGuard] Authentification requise mais pas d\'utilisateur, redirection vers login');
       navigate("/", { replace: true });
       return;
     }
 
     // Vérification des rôles si nécessaire
     if (requireRole && profile && profile.role !== requireRole) {
-      console.log(`Rôle requis: ${requireRole}, rôle utilisateur: ${profile.role}, redirection vers /home`);
+      console.log(`⚠️ [AuthGuard] Rôle requis: ${requireRole}, rôle utilisateur: ${profile.role}, redirection vers /home`);
       navigate("/home", { replace: true });
       return;
     }
 
-    console.log('[AuthGuard] Accès autorisé');
+    console.log('✅ [AuthGuard] Accès autorisé');
   }, [loading, user, profile?.role, requireAuth, requireRole, location.pathname, navigate]);
 
   if (loading) {

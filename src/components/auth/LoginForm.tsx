@@ -17,10 +17,30 @@ export const LoginForm: React.FC = () => {
     setIsLoading(true);
 
     try {
-      await signIn(email, password);
-      showSuccessToast("Connexion réussie", "Bienvenue !");
-      navigate("/home");
+      console.log("🔐 [LoginForm] Tentative de connexion avec:", email);
+      
+      const result = await signIn(email, password);
+      console.log("📊 [LoginForm] Résultat signIn:", {
+        user: !!result.user,
+        email: result.user?.email
+      });
+      
+      if (result.user) {
+        console.log("✅ [LoginForm] Connexion réussie, redirection immédiate vers /home");
+        showSuccessToast("Connexion réussie", "Bienvenue !");
+        
+        // Redirection immédiate et forcée
+        navigate("/home", { replace: true });
+        
+        // Force le rechargement du state si nécessaire
+        window.location.hash = "#/home";
+      } else {
+        console.log("❌ [LoginForm] Pas d'utilisateur dans le résultat");
+        showErrorToast("Échec de connexion", "Une erreur s'est produite");
+      }
+      
     } catch (error: any) {
+      console.error("❌ [LoginForm] Erreur de connexion:", error);
       showErrorToast("Erreur de connexion", error.message);
     } finally {
       setIsLoading(false);

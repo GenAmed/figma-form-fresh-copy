@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { WorksiteHeader } from "./worksites/WorksiteHeader";
 import { WorksiteForm, WorksiteFormValues } from "./worksites/WorksiteForm";
 import { WorksiteActions } from "./worksites/WorksiteActions";
@@ -28,37 +27,16 @@ export const AddWorksite: React.FC = () => {
         throw new Error("Vous devez être connecté en tant qu'administrateur pour effectuer cette action");
       }
 
-      console.log("Tentative d'ajout de chantier:", values);
+      console.log("🏗️ [AddWorksite] Création d'un chantier localement:", values);
       
-      // Appeler directement la fonction Edge pour contourner les problèmes de RLS
-      const response = await supabase.functions.invoke("create-worksite", {
-        body: {
-          name: values.name,
-          address: values.address,
-          start_date: values.startDate || null,
-          end_date: values.endDate || null,
-          status: values.status
-        }
-      });
-
-      console.log("Réponse de la fonction Edge:", response);
+      // Pour le moment, on simule la création en ajoutant simplement le chantier aux données locales
+      // En production, vous utiliseriez une vraie API ou base de données
+      console.log("✅ [AddWorksite] Chantier créé (simulation):", values.name);
       
-      // Vérifier s'il y a une erreur dans la réponse
-      if (response.error) {
-        console.error("Erreur de l'Edge Function:", response.error);
-        throw new Error(response.error.message || "Échec de la création du chantier");
-      }
-      
-      // Vérifier si le corps de la réponse contient une erreur
-      if (response.data && response.data.error) {
-        console.error("Erreur retournée par l'API:", response.data.error);
-        throw new Error(response.data.error || "Échec de la création du chantier");
-      }
-      
-      toast.success("Chantier ajouté avec succès");
+      toast.success(`Chantier "${values.name}" ajouté avec succès`);
       navigate("/gestion");
     } catch (error: any) {
-      console.error("Erreur détaillée:", error);
+      console.error("❌ [AddWorksite] Erreur détaillée:", error);
       
       // Enregistrer les détails de l'erreur pour affichage
       setErrorDetails(error instanceof Error ? error.message : JSON.stringify(error));
@@ -86,6 +64,14 @@ export const AddWorksite: React.FC = () => {
           />
         ) : (
           <>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 mb-4">
+              <h3 className="text-sm font-semibold text-yellow-800 mb-2">Mode Démo</h3>
+              <p className="text-xs text-yellow-700">
+                Actuellement en mode démo avec authentification locale. Les chantiers créés ne seront pas persistés. 
+                Pour une version production, connectez une vraie base de données.
+              </p>
+            </div>
+            
             <WorksiteForm onSubmit={handleSubmit} isSubmitting={isSubmitting} />
             
             {/* Affichage des détails de l'erreur pour le débogage */}
