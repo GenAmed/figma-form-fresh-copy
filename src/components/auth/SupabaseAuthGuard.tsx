@@ -22,30 +22,33 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
   useEffect(() => {
     if (loading) return;
 
-    const currentPath = location.pathname;
+    console.log(`[AuthGuard] Current path: ${location.pathname}, requireAuth: ${requireAuth}, user: ${!!user}`);
     
-    // Page publique (page de connexion)
+    // Si on est sur la page de login (requireAuth = false)
     if (!requireAuth) {
-      if (user && currentPath === "/") {
-        console.log('Utilisateur connecté, redirection vers /home');
+      // Si l'utilisateur est connecté et sur la page de login, rediriger vers home
+      if (user && (location.pathname === "/" || location.pathname === "")) {
+        console.log('Utilisateur connecté sur page login, redirection vers /home');
         navigate("/home", { replace: true });
       }
       return;
     }
 
-    // Routes protégées
+    // Si on a besoin d'authentification mais pas d'utilisateur
     if (!user) {
-      console.log('Pas d\'utilisateur, redirection vers login');
+      console.log('Authentification requise mais pas d\'utilisateur, redirection vers login');
       navigate("/", { replace: true });
       return;
     }
 
-    // Contrôle d'accès basé sur les rôles
+    // Vérification des rôles si nécessaire
     if (requireRole && profile && profile.role !== requireRole) {
-      console.log('Rôle utilisateur incompatible, redirection vers /home');
+      console.log(`Rôle requis: ${requireRole}, rôle utilisateur: ${profile.role}, redirection vers /home`);
       navigate("/home", { replace: true });
       return;
     }
+
+    console.log('[AuthGuard] Accès autorisé');
   }, [loading, user, profile?.role, requireAuth, requireRole, location.pathname, navigate]);
 
   if (loading) {
@@ -59,11 +62,12 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     );
   }
 
-  // Ne pas afficher les enfants si l'utilisateur doit être redirigé
+  // Si on est sur une route protégée sans utilisateur, ne rien afficher (la redirection est en cours)
   if (requireAuth && !user) {
     return null;
   }
 
+  // Si on a besoin d'un rôle spécifique et que l'utilisateur ne l'a pas
   if (requireRole && profile && profile.role !== requireRole) {
     return null;
   }
