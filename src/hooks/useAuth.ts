@@ -1,122 +1,19 @@
 
 import { useState, useEffect } from 'react';
-import { User, Session } from '@supabase/supabase-js';
-import { supabase } from '@/integrations/supabase/client';
-
-interface UserProfile {
-  id: string;
-  name: string;
-  email: string;
-  role: "ouvrier" | "admin";
-  avatar_url?: string;
-  phone?: string;
-  active: boolean;
-}
+import { User, authenticateUser, getCurrentUser, setCurrentUser, clearCurrentUser, extendSession } from '@/lib/auth';
 
 export const useAuth = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let mounted = true;
-
-    const fetchProfile = async (userId: string) => {
-      try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", userId)
-          .single();
-
-        if (error) {
-          console.error('Error fetching profile:', error);
-          if (mounted) {
-            setError(error.message);
-            setProfile(null);
-          }
-          return;
-        }
-        
-        if (mounted && data) {
-          setProfile({
-            id: data.id,
-            name: data.name || 'Utilisateur',
-            email: data.email,
-            role: (data.role === "admin" || data.role === "ouvrier") ? data.role : "ouvrier",
-            avatar_url: data.avatar_url,
-            phone: data.phone,
-            active: data.active !== false
-          });
-          setError(null);
-        }
-      } catch (err: any) {
-        console.error('Exception fetching profile:', err);
-        if (mounted) {
-          setError(err.message || 'Erreur de connexion');
-          setProfile(null);
-        }
-      }
-    };
-
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) {
-          console.error('Error getting initial session:', error);
-          if (mounted) {
-            setError(error.message);
-          }
-        } else if (mounted) {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            await fetchProfile(session.user.id);
-          }
-        }
-      } catch (err: any) {
-        console.error('Exception getting initial session:', err);
-        if (mounted) {
-          setError(err.message || 'Erreur de connexion');
-        }
-      } finally {
-        if (mounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    // Set up auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email);
-        
-        if (!mounted) return;
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        setError(null);
-        
-        if (session?.user) {
-          await fetchProfile(session.user.id);
-        } else {
-          setProfile(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    getInitialSession();
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    // Vérifier si un utilisateur est déjà connecté au chargement
+    const currentUser = getCurrentUser();
+    if (currentUser) {
+      setUser(extendSession(currentUser));
+    }
+    setLoading(false);
   }, []);
 
   const signIn = async (email: string, password: string) => {
@@ -124,19 +21,22 @@ export const useAuth = () => {
     setError(null);
     
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const { user: authenticatedUser, error: authError } = authenticateUser(email, password);
       
-      if (error) {
-        setError(error.message);
+      if (authError) {
+        setError(authError);
         setLoading(false);
-        throw error;
+        throw new Error(authError);
       }
       
-      return data;
-    } catch (error) {
+      if (authenticatedUser) {
+        setCurrentUser(authenticatedUser);
+        setUser(authenticatedUser);
+      }
+      
+      setLoading(false);
+      return { user: authenticatedUser, error: null };
+    } catch (error: any) {
       setLoading(false);
       throw error;
     }
@@ -144,20 +44,27 @@ export const useAuth = () => {
 
   const signOut = async () => {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        setError(error.message);
-        throw error;
-      }
-    } catch (error) {
+      clearCurrentUser();
+      setUser(null);
+      setError(null);
+    } catch (error: any) {
+      setError(error.message);
       throw error;
     }
   };
 
   return {
     user,
-    session,
-    profile,
+    profile: user ? {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar_url: user.avatarUrl,
+      phone: user.phone,
+      active: true
+    } : null,
+    session: user ? { user } : null,
     loading,
     error,
     signIn,
