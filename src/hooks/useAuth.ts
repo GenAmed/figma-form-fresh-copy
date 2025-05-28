@@ -22,7 +22,6 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
-    let initializing = true;
 
     const fetchProfile = async (userId: string) => {
       try {
@@ -62,7 +61,7 @@ export const useAuth = () => {
       }
     };
 
-    // Get initial session first
+    // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -86,18 +85,17 @@ export const useAuth = () => {
         }
       } finally {
         if (mounted) {
-          initializing = false;
           setLoading(false);
         }
       }
     };
 
-    // Set up auth listener AFTER initial session
+    // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state changed:', event, session?.user?.email);
         
-        if (!mounted || initializing) return;
+        if (!mounted) return;
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -108,6 +106,8 @@ export const useAuth = () => {
         } else {
           setProfile(null);
         }
+        
+        setLoading(false);
       }
     );
 
