@@ -32,10 +32,12 @@ export const useAuth = () => {
       if (authenticatedUser) {
         setCurrentUser(authenticatedUser);
         setUser(authenticatedUser);
+        setLoading(false);
+        return { user: authenticatedUser, error: null };
       }
       
       setLoading(false);
-      return { user: authenticatedUser, error: null };
+      throw new Error("Erreur d'authentification");
     } catch (error: any) {
       setLoading(false);
       throw error;

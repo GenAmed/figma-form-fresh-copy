@@ -24,25 +24,25 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
 
     const currentPath = location.pathname;
     
-    // Public route (login page)
+    // Page publique (page de connexion)
     if (!requireAuth) {
       if (user && currentPath === "/") {
-        console.log('User logged in, redirecting to /home');
+        console.log('Utilisateur connecté, redirection vers /home');
         navigate("/home", { replace: true });
       }
       return;
     }
 
-    // Protected routes
-    if (!user && currentPath !== "/") {
-      console.log('No user, redirecting to login');
+    // Routes protégées
+    if (!user) {
+      console.log('Pas d\'utilisateur, redirection vers login');
       navigate("/", { replace: true });
       return;
     }
 
-    // Role-based access
-    if (requireRole && profile && profile.role !== requireRole && currentPath !== "/home") {
-      console.log('User role mismatch, redirecting to /home');
+    // Contrôle d'accès basé sur les rôles
+    if (requireRole && profile && profile.role !== requireRole) {
+      console.log('Rôle utilisateur incompatible, redirection vers /home');
       navigate("/home", { replace: true });
       return;
     }
@@ -59,7 +59,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     );
   }
 
-  // Don't render children if user should be redirected
+  // Ne pas afficher les enfants si l'utilisateur doit être redirigé
   if (requireAuth && !user) {
     return null;
   }
