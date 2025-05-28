@@ -26,6 +26,7 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
     
     // Public route (login page)
     if (!requireAuth) {
+      // Only redirect from root if user is logged in
       if (user && currentPath === "/") {
         console.log('User logged in, redirecting to /home');
         navigate("/home", { replace: true });
@@ -33,17 +34,15 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
       return;
     }
 
-    // Protected routes
-    if (!user) {
-      if (currentPath !== "/") {
-        console.log('No user, redirecting to login');
-        navigate("/", { replace: true });
-      }
+    // Protected routes - only redirect if no user and not already on login page
+    if (!user && currentPath !== "/") {
+      console.log('No user, redirecting to login');
+      navigate("/", { replace: true });
       return;
     }
 
-    // Role-based access
-    if (requireRole && profile && profile.role !== requireRole) {
+    // Role-based access - only redirect if role mismatch and not already on home
+    if (requireRole && profile && profile.role !== requireRole && currentPath !== "/home") {
       console.log('User role mismatch, redirecting to /home');
       navigate("/home", { replace: true });
       return;
@@ -59,6 +58,15 @@ export const SupabaseAuthGuard: React.FC<SupabaseAuthGuardProps> = ({
         </div>
       </div>
     );
+  }
+
+  // Don't render children if user should be redirected
+  if (requireAuth && !user) {
+    return null;
+  }
+
+  if (requireRole && profile && profile.role !== requireRole) {
+    return null;
   }
 
   return <>{children}</>;
