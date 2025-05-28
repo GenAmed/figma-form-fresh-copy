@@ -1,7 +1,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useSupabaseAuth } from "@/hooks/useSupabaseAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { BackButton } from "./BackButton";
 import { showSuccessToast } from "@/services/notifications/toastService";
 
@@ -21,7 +21,7 @@ export const SupabaseHeader: React.FC<SupabaseHeaderProps> = ({
   title
 }) => {
   const navigate = useNavigate();
-  const { signOut } = useSupabaseAuth();
+  const { signOut } = useAuth();
   const [showMenu, setShowMenu] = React.useState(false);
 
   const handleLogout = async () => {

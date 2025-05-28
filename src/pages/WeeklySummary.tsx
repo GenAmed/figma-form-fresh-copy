@@ -2,10 +2,10 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { WeeklySummaryWorker } from "@/components/tracking/WeeklySummaryWorker";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 const WeeklySummary: React.FC = () => {
-  const { profile, loading, user } = useSupabaseProfile();
+  const { profile, loading, user } = useAuth();
 
   if (loading) {
     return (

@@ -11,10 +11,10 @@ import { UserDetails } from "@/components/gestion/UserDetails";
 import { AddAssignment } from "@/components/gestion/AddAssignment";
 import { EditUser } from "@/components/gestion/EditUser";
 import { InternalMessagesManager } from "@/components/admin/InternalMessagesManager";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 const Gestion = () => {
-  const { profile, loading } = useSupabaseProfile();
+  const { profile, loading } = useAuth();
 
   // Affichage de chargement
   if (loading) {

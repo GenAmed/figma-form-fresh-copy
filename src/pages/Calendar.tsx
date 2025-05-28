@@ -3,10 +3,10 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { CalendarWorker } from "@/components/calendar/CalendarWorker";
 import { CalendarAdmin } from "@/components/calendar/CalendarAdmin";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 const Calendar = () => {
-  const { profile, loading, user } = useSupabaseProfile();
+  const { profile, loading, user } = useAuth();
 
   if (loading) {
     return (

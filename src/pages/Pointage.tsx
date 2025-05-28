@@ -2,10 +2,10 @@
 import React from "react";
 import { PointageWorker } from "@/components/pointage/PointageWorker";
 import { Navigate } from "react-router-dom";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 const Pointage: React.FC = () => {
-  const { profile, loading, user } = useSupabaseProfile();
+  const { profile, loading, user } = useAuth();
 
   if (loading) {
     return (

@@ -3,10 +3,10 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { UserProfile } from "@/components/profile/UserProfile";
 import { AdminProfile } from "@/components/profile/AdminProfile";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 const Profile: React.FC = () => {
-  const { profile, loading, user } = useSupabaseProfile();
+  const { profile, loading, user } = useAuth();
 
   if (loading) {
     return (

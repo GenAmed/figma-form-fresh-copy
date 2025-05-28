@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomNavigation } from "@/components/navigation/BottomNavigation";
@@ -6,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Pencil, UserPlus, Trash2, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { showSuccessToast, showErrorToast } from "@/services/notifications/toastService";
-import { useSupabaseProfile } from "@/hooks/useSupabaseProfile";
+import { useAuth } from "@/hooks/useAuth";
 
 type UserData = {
   id: string;
@@ -21,7 +20,7 @@ export const UserManagement: React.FC = () => {
   const navigate = useNavigate();
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
-  const { profile: currentUserProfile } = useSupabaseProfile();
+  const { profile: currentUserProfile } = useAuth();
 
   // Charger les utilisateurs depuis Supabase
   useEffect(() => {
