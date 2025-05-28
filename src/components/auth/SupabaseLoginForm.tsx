@@ -41,16 +41,15 @@ export const SupabaseLoginForm: React.FC = () => {
       const result = await signIn(data.email, data.password);
       console.log("📊 [LoginForm] Résultat signIn:", {
         user: !!result.user,
-        email: result.user?.email,
-        session: !!result.session
+        email: result.user?.email
       });
       
-      if (result.user && result.session) {
+      if (result.user) {
         console.log("✅ [LoginForm] Connexion réussie, redirection gérée par AuthGuard");
         showSuccessToast("Connexion réussie", "Bienvenue !");
         // La redirection est gérée par SupabaseAuthGuard
       } else {
-        console.log("❌ [LoginForm] Pas d'utilisateur ou de session dans le résultat");
+        console.log("❌ [LoginForm] Pas d'utilisateur dans le résultat");
         showErrorToast("Échec de connexion", "Une erreur s'est produite");
       }
       
@@ -127,10 +126,10 @@ export const SupabaseLoginForm: React.FC = () => {
           ✅ Comptes de test disponibles:
         </p>
         <div className="text-xs text-gray-700 mb-1 bg-green-50 p-2 rounded">
-          <strong>Admin:</strong> admin@avem.fr / password123
+          <strong>Admin:</strong> admin@avem.fr / admin2024
         </div>
         <div className="text-xs text-gray-700 bg-blue-50 p-2 rounded">
-          <strong>Ouvrier:</strong> ouvrier@avem.fr / password123
+          <strong>Ouvrier:</strong> ouvrier@avem.fr / avem2024
         </div>
       </div>
     </form>
