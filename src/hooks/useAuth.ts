@@ -22,6 +22,7 @@ export const useAuth = () => {
 
   useEffect(() => {
     let mounted = true;
+    let initializing = true;
 
     const fetchProfile = async (userId: string) => {
       try {
@@ -61,42 +62,42 @@ export const useAuth = () => {
       }
     };
 
-    const initAuth = async () => {
+    // Get initial session first
+    const getInitialSession = async () => {
       try {
-        // Get initial session
         const { data: { session }, error } = await supabase.auth.getSession();
-        
         if (error) {
-          console.error('Error getting session:', error);
-          if (mounted) setError(error.message);
-        }
-
-        if (mounted) {
+          console.error('Error getting initial session:', error);
+          if (mounted) {
+            setError(error.message);
+          }
+        } else if (mounted) {
           setSession(session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
             await fetchProfile(session.user.id);
-          } else {
-            setProfile(null);
           }
-          setLoading(false);
         }
       } catch (err: any) {
-        console.error('Auth initialization error:', err);
+        console.error('Exception getting initial session:', err);
         if (mounted) {
-          setError(err.message);
+          setError(err.message || 'Erreur de connexion');
+        }
+      } finally {
+        if (mounted) {
+          initializing = false;
           setLoading(false);
         }
       }
     };
 
-    // Set up auth state listener
+    // Set up auth listener AFTER initial session
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, session?.user?.email);
         
-        if (!mounted) return;
+        if (!mounted || initializing) return;
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -110,7 +111,7 @@ export const useAuth = () => {
       }
     );
 
-    initAuth();
+    getInitialSession();
 
     return () => {
       mounted = false;
@@ -130,14 +131,14 @@ export const useAuth = () => {
       
       if (error) {
         setError(error.message);
+        setLoading(false);
         throw error;
       }
       
       return data;
     } catch (error) {
-      throw error;
-    } finally {
       setLoading(false);
+      throw error;
     }
   };
 
