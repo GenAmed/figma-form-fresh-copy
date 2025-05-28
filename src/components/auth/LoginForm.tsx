@@ -26,17 +26,9 @@ export const LoginForm: React.FC = () => {
       });
       
       if (result.user) {
-        console.log("✅ [LoginForm] Connexion réussie, redirection immédiate vers /home");
+        console.log("✅ [LoginForm] Connexion réussie, redirection vers /home");
         showSuccessToast("Connexion réussie", "Bienvenue !");
-        
-        // Redirection immédiate et forcée
         navigate("/home", { replace: true });
-        
-        // Force le rechargement du state si nécessaire
-        window.location.hash = "#/home";
-      } else {
-        console.log("❌ [LoginForm] Pas d'utilisateur dans le résultat");
-        showErrorToast("Échec de connexion", "Une erreur s'est produite");
       }
       
     } catch (error: any) {
@@ -80,16 +72,11 @@ export const LoginForm: React.FC = () => {
         {isLoading ? "Connexion..." : "Se connecter"}
       </button>
       
-      {/* Comptes de test */}
+      {/* Note d'information pour les utilisateurs */}
       <div className="mt-6 p-4 bg-blue-50 rounded-md">
-        <h3 className="text-sm font-medium text-blue-800 mb-2">Comptes de test disponibles :</h3>
-        <div className="space-y-2 text-xs text-blue-700">
-          <div>
-            <strong>Admin :</strong> admin@avem.fr / admin2024
-          </div>
-          <div>
-            <strong>Ouvrier :</strong> ouvrier@avem.fr / avem2024
-          </div>
+        <h3 className="text-sm font-medium text-blue-800 mb-2">Information :</h3>
+        <div className="text-xs text-blue-700">
+          Pour tester l'application, vous devez d'abord créer un compte utilisateur via l'interface d'administration de Supabase ou demander à un administrateur de vous créer un compte.
         </div>
       </div>
     </form>
